@@ -33,6 +33,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Sync with latest main (un run en cola puede haber hecho checkout de un commit anterior al último "data:" commit)
+        run: |
+          git config user.name "polestar-tracker-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git pull --rebase origin main || true
       - name: Refresh inventory (both sources, all configured markets)
         run: node src/fetch.js --history=daily
       - name: Notify changes (Telegram / ntfy) — no hace nada si no hay secrets configurados
@@ -52,12 +57,16 @@ jobs:
         run: node src/notify.js
       - name: Commit data (history + tracking + public/data)
         run: |
-          git config user.name "polestar-tracker-bot"
-          git config user.email "bot@users.noreply.github.com"
           git add data public/data
-          git diff --cached --quiet || git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git pull --rebase   # por si main ha avanzado durante los minutos que dura el refresco
-          git push
+          if git diff --cached --quiet; then echo "sin cambios en data/"; exit 0; fi
+          git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # main puede haber avanzado durante los minutos que dura el refresco. Los ficheros de data/ son generados:
+          # en caso de conflicto gana este refresco (en un rebase, -X theirs = el commit que se está reaplicando, el nuestro).
+          for i in 1 2 3; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            echo "push falló (intento $i), reintentando…"; git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
