@@ -1,0 +1,243 @@
+
+  query SearchVehicleAds(
+    $modelCode: String!
+    $market: String!
+    $region: String
+    $offset: Int!
+    $limit: Int!
+    $sortOrder: SortOrder2!
+    $sortProperty: SortProperty!
+    $equalFilters: [EqualFilter!]
+    $excludeFilters: [ExcludeFilter!]
+  ) {
+    searchVehicleAds(
+      modelCode: $modelCode
+      market: $market
+      region: $region
+      offset: $offset
+      limit: $limit
+      sortOrder: $sortOrder
+      sortProperty: $sortProperty
+      equalFilters: $equalFilters
+      excludeFilters: $excludeFilters
+    ) {
+      metadata {
+        equalFilters {
+          filterType
+          labels {
+            label
+            locale
+          }
+          resultCount
+          totalCount
+          thumbnail {
+            alt
+            url
+          }
+          value
+        }
+        limit
+        offset
+        resultCount
+        totalCount
+      }
+      vehicleAds {
+        deliveryInformation {
+          homeDelivery {
+            estimatedDeliveryTime
+          }
+          hubDelivery {
+            estimatedDeliveryTime
+          }
+        }
+        vatDeductible
+        id
+        versionTimestamp
+        firstTimeRegistration
+        price {
+          retail
+          dealer
+          vat
+          currency
+        }
+        handoverLocation {
+          city
+          name
+        }
+        partnerLocation {
+          city
+          name
+        }
+        media {
+          data
+          mediaType
+        }
+        mileageInfo {
+          distance
+          metric
+        }
+        vehicleDetails {
+          vin
+          cycleState
+          interior {
+            code
+            labels {
+              locale
+              label
+            }
+            thumbnail {
+              url
+              alt
+            }
+          }
+          pno34
+          stockImages
+          vehicleImages {
+            url
+            rawUrl
+            imageType
+            category
+            angle
+          }
+          motorInfo {
+            labels {
+              locale
+              label
+            }
+            value
+          }
+          modelDetails {
+            code
+            displayName
+            modelYear
+            model
+            edition
+            structureWeek
+          }
+          rangeInformation {
+            labels {
+              label
+              locale
+            }
+            value
+          }
+          engineDetails {
+            powerInfo {
+              locale
+              label
+            }
+            accelerationInfo {
+              locale
+              label
+            }
+          }
+          drivetrainInfo {
+            label
+            locale
+          }
+          singleOptions {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          motorInformation {
+            electricMotorRear
+            electricMotorFront
+            electricMotors {
+              locale
+              label
+            }
+          }
+          pilotPackage {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          plusPackage {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          exterior {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          performancePackage {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          proPack {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          plusProPackage {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          climatePack {
+            code
+            labels {
+              label
+              locale
+            }
+          }
+          wheels {
+            code
+            thumbnail {
+              url
+              alt
+            }
+            labels {
+              label
+              locale
+            }
+          }
+
+          vehicleAdExtras {
+            id
+            type
+            items {
+              id
+              title
+              image
+              articleNumber
+            }
+            languageCode
+          }
+          vehicleAdExtras1 {
+            languageCode
+            vehicleAdExtras {
+              id
+              items {
+                articleNumber
+                id
+                image
+                title
+              }
+              languageCode
+              type
+            }
+          }
+          seats
+        }
+      }
+    }
+  }

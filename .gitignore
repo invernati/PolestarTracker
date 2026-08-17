@@ -1,0 +1,10 @@
+# Respuestas crudas de la API (pesadas, se regeneran en cada refresco)
+data/raw/
+
+# Sistema
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Log de la tarea programada local
+data/refresh.log

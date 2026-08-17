@@ -1,0 +1,185 @@
+query LoadResultsQuery(
+  $market: String!
+  $includeValidFilters: Boolean!
+  $filters: [FilterValueGroupInput]!
+  $pagination: PaginationInput
+  $partnerId: String
+  $sort: FilterSortInput
+  $stateCode: String
+  $customerType: String
+  $source: SourceType = Preconfigured
+  $includeLocationStock: Boolean = false
+) {
+  vehicles: filteredStockCars(
+    market: $market
+    includeValidFilters: $includeValidFilters
+    filters: $filters
+    pagination: $pagination
+    partnerId: $partnerId
+    sort: $sort
+    stateCode: $stateCode
+    customerType: $customerType
+    source: $source
+    includeLocationStock: $includeLocationStock
+  ) {
+    market
+    pagination {
+      pageSize
+      pageNo
+      totalRecords
+    }
+    filterResults {
+      bundles {
+        includes {
+          featureCode
+        }
+        name
+      }
+      id
+      pno34
+      modelYear
+      startStructureWeek
+      earliestDeliveryDateLabel
+      earliestDeliveryDate
+      cashPriceData {
+        discounted {
+          totals {
+            car {
+              carTotalBasicPrice {
+                value
+              }
+              carTotalPrice {
+                value
+              }
+            }
+            grandTotal {
+              paymentTotal {
+                paymentTotalBasicPrice {
+                  value
+                }
+                paymentTotalPrice {
+                  value
+                }
+              }
+            }
+          }
+        }
+        listPrice {
+          totals {
+            car {
+              carTotalBasicPrice {
+                value
+              }
+              carTotalPrice {
+                value
+              }
+            }
+            grandTotal {
+              paymentTotal {
+                paymentTotalBasicPrice {
+                  value
+                }
+                paymentTotalPrice {
+                  value
+                }
+              }
+            }
+          }
+        }
+      }
+      leasePriceData {
+        promotedPrices {
+          valueFormat
+          disclaimer
+        }
+      }
+      carVisualizationImages {
+        views {
+          angles {
+            angle
+            url
+          }
+          name
+          resolution {
+            height
+            width
+          }
+        }
+      }
+      content {
+        name
+        cardTitle
+        drawerTitle
+        featureCode
+        filterTypeId
+        featureType
+        featureCards {
+          title
+          body
+          image {
+            url
+            alt
+          }
+          video {
+            url
+            alt
+          }
+        }
+        code
+        images {
+          url
+          alt
+        }
+        thumbnail {
+          url
+          alt
+        }
+      }
+      towbar {
+        cardTitle
+        code
+      }
+      wltpNedcSummary {
+        items {
+          name
+          description
+          value
+          unit
+        }
+      }
+      techData {
+        engineBev_LabelForPower
+        drive
+        engineBev_ElectricRange
+        labelForRange
+        labelForDivider
+        engineBev_TotalKw
+        engineBev_TotalHp
+        driveTrain
+        engineBev_ElectricRangeEpaMiles
+        performance
+      }
+      packages {
+        code
+        name
+        filterTypeId
+        featureType
+        images {
+          url
+          alt
+        }
+        thumbnail {
+          url
+          alt
+        }
+      }
+      isCampaignEnabled
+      mandatoryExtras {
+        salesId
+        code
+        title
+      }
+      stockTypeDeliveryDateLabel
+    }
+  }
+}

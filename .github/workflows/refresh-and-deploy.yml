@@ -1,0 +1,73 @@
+# Refresca el inventario en un runner de GitHub (tu PC puede estar apagado), avisa de cambios y publica
+# public/ en GitHub Pages. Requisitos: Settings → Pages → Source = "GitHub Actions".
+# El historial (data/) se guarda commiteándolo al repo (así firstSeen / histórico de precios sobreviven entre runs).
+name: Refresh inventory & deploy
+
+on:
+  schedule:
+    # Horas "críticas" en España: 08:00, 13:00, 18:00 y 22:00 hora peninsular.
+    # El cron va en UTC: en verano (CEST, UTC+2) → 06,11,16,20; en invierno (CET, UTC+1) se ejecutará una hora
+    # antes en hora local (07:00, 12:00, 17:00, 21:00) — cambia a '0 7,12,17,21 * * *' en invierno si te importa.
+    # Más frecuencia: cada 2 h de día '15 6-22/2 * * *' · cada hora '15 * * * *' (solo repo público).
+    - cron: '0 6,11,16,20 * * *'
+  workflow_dispatch: {}   # botón "Run workflow" en Actions (también desde la app móvil de GitHub)
+  push:
+    branches: [main]
+    paths: ['public/**', 'src/**', '.github/workflows/**', 'package.json']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh-deploy
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh inventory (both sources, all configured markets)
+        run: node src/fetch.js --history=daily
+      - name: Notify changes (Telegram / ntfy) — no hace nada si no hay secrets configurados
+        if: always()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_EMAIL: ${{ secrets.NTFY_EMAIL }}
+          NOTIFY_MARKETS: ${{ vars.NOTIFY_MARKETS || 'es' }}
+          NOTIFY_MODELS: ${{ vars.NOTIFY_MODELS || 'P3,P4' }}
+          NOTIFY_SOURCES: ${{ vars.NOTIFY_SOURCES || 'preowned,stock' }}
+          NOTIFY_VARIANTS: ${{ vars.NOTIFY_VARIANTS || '' }}
+          NOTIFY_EVENTS: ${{ vars.NOTIFY_EVENTS || 'new,drop' }}
+          SITE_URL: ${{ vars.SITE_URL || '' }}
+        run: node src/notify.js
+      - name: Commit data (history + tracking + public/data)
+        run: |
+          git config user.name "polestar-tracker-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data public/data
+          git diff --cached --quiet || git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase   # por si main ha avanzado durante los minutos que dura el refresco
+          git push
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

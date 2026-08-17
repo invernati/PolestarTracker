@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Polestar Tracker · Europa</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff7500'/%3E%3Cpath d='M9 9h14v3H12v3h9v3h-9v5H9z' fill='%23fff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="top-left">
+      <h1><span class="logo">★</span> Polestar Tracker <span class="muted">· Europa</span></h1>
+      <div class="meta">
+        <span id="updated">Sin datos: ejecuta <code>npm run refresh</code></span>
+        <span id="totals"></span>
+        <span id="refresh-box" class="hidden"><button type="button" id="refresh-btn" class="btn-refresh" title="Refresca solo lo que estás viendo (países y modelos marcados, pestaña actual)">↻ Actualizar lo que veo</button> <button type="button" id="refresh-all" class="btn-refresh btn-refresh-all" title="Refresca todos los mercados y modelos (≈4-5 min)">↻ Todo</button> <span id="refresh-status" class="muted"></span></span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Secciones">
+      <button type="button" class="tab active" data-tab="preowned">Pre-owned <span class="tab-count" id="cnt-preowned">–</span></button>
+      <button type="button" class="tab" data-tab="stock">Nuevos en stock <span class="tab-count" id="cnt-stock">–</span></button>
+      <button type="button" class="tab" data-tab="offers">Ofertas y bajadas <span class="tab-count" id="cnt-offers">–</span></button>
+      <button type="button" class="tab" data-tab="recent" title="Nuevos y bajadas de precio detectados en las últimas 24 horas">Últimas 24 h <span class="tab-count" id="cnt-recent">–</span></button>
+    </nav>
+  </header>
+
+  <div class="chips-row" id="market-chips"></div>
+
+  <section class="filters" id="filters">
+    <div class="fgroup">
+      <div class="fgroup-title">Modelo <span class="quick"><button type="button" data-quick-group="models" data-quick="all">Todos</button></span></div>
+      <div class="fopts" id="f-model"></div>
+    </div>
+    <div class="fgroup">
+      <div class="fgroup-title">Motorización <span class="quick"><button type="button" data-quick-group="variants" data-quick="all">Todas</button></span></div>
+      <div class="fopts" id="f-variant"></div>
+    </div>
+    <div class="fgroup">
+      <div class="fgroup-title">Año modelo <span class="quick"><button type="button" data-quick-group="years" data-quick="all">Todos</button></span></div>
+      <div class="fopts" id="f-year"></div>
+    </div>
+    <div class="fgroup fgroup-wide">
+      <div class="fgroup-title">
+        Países
+        <span class="quick">
+          <button type="button" data-quick-group="countries" data-quick="all">Todos</button>
+          <button type="button" data-quick-group="countries" data-quick="none">Ninguno</button>
+        </span>
+      </div>
+      <div class="fopts" id="f-country"></div>
+    </div>
+    <div class="fgroup">
+      <div class="fgroup-title">Otros</div>
+      <div class="fopts fopts-col">
+        <label><input type="checkbox" id="f-hide-single" /> Ocultar Single / Rear motor</label>
+        <label><input type="checkbox" id="f-hide-coupe" /> Ocultar P4 MY2027 / Coupé</label>
+        <label class="only-preowned"><input type="checkbox" id="f-vat" /> Solo IVA deducible</label>
+        <label class="only-stock"><input type="checkbox" id="f-campaign" /> Solo con oferta</label>
+        <label title="Vehículos que aparecieron por primera vez en el último refresco"><input type="checkbox" id="f-new" /> Solo nuevos (último refresco)</label>
+        <label title="Vehículos cuyo precio ha bajado respecto al refresco anterior"><input type="checkbox" id="f-drops" /> Solo bajadas de precio (último refresco)</label>
+        <label>Precio máx. (€) <input type="number" id="f-price-max" min="0" step="500" placeholder="—" /></label>
+        <label class="only-preowned">Km máx. <input type="number" id="f-km-max" min="0" step="1000" placeholder="—" /></label>
+        <label>Buscar <input type="search" id="f-text" placeholder="color, ciudad, VIN, pack…" /></label>
+        <button type="button" id="f-reset" class="btn-reset">Restablecer filtros</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="removed hidden" id="removed-panel">
+    <div class="removed-head"><b>Retirados desde el refresco anterior</b> <span class="muted" id="removed-info"></span> <button type="button" class="btn-reset" id="removed-close">Cerrar</button></div>
+    <div class="table-wrap-inner"><table class="removed-table"><thead><tr><th></th><th>Tipo</th><th>Modelo</th><th>Versión</th><th class="num">MY</th><th class="num">Km</th><th class="num">Precio</th><th>Color</th><th>Ubicación</th><th>País</th><th class="num">Días visto</th><th></th></tr></thead><tbody id="removed-rows"></tbody></table></div>
+  </section>
+
+  <section class="summary" id="summary"></section>
+
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead><tr id="thead-row"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div id="empty" class="empty-msg hidden">Ningún vehículo cumple los filtros.</div>
+    <div id="more" class="more-msg hidden"><span id="more-info"></span> <button type="button" id="more-page" class="btn-reset">Mostrar más</button> <button type="button" id="more-all" class="btn-reset">Mostrar todas</button></div>
+  </div>
+
+  <footer class="foot">
+    <span>Fuentes: APIs públicas de Polestar (<code>pc-api.polestar.com</code>): inventario Pre-owned y coches nuevos en stock ("listos para entrega"). Precios en EUR convertidos con tipos fijos (ver <code>src/config.js</code>) solo para ordenar.</span>
+    <span id="legend">Los contadores <em>nuevos / retirados / bajadas</em> de la cabecera comparan con el refresco anterior y son clicables. Leyenda: <span class="badge warn">MY27/Coupé</span> P4 sin suspensión semiactiva de serie en Dual Motor · <span class="badge import">no UE</span> / <span class="badge rhd">RHD</span> aviso importación · filas atenuadas = Single/Rear motor · <span class="badge drop">▼</span> bajada de precio · <span class="badge offer">oferta</span> descuento sobre precio de lista (stock) · <span class="badge new">nuevo</span> visto por primera vez en el último refresco.</span>
+  </footer>
+
+  <script src="data/inventory.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
