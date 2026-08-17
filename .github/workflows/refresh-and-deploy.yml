@@ -48,7 +48,7 @@ jobs:
           NOTIFY_SOURCES: ${{ vars.NOTIFY_SOURCES || 'preowned,stock' }}
           NOTIFY_VARIANTS: ${{ vars.NOTIFY_VARIANTS || '' }}
           NOTIFY_EVENTS: ${{ vars.NOTIFY_EVENTS || 'new,drop' }}
-          SITE_URL: ${{ vars.SITE_URL || '' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://invernati.github.io/PolestarTracker/' }}
         run: node src/notify.js
       - name: Commit data (history + tracking + public/data)
         run: |

@@ -143,16 +143,16 @@ El repo local ya está inicializado y commiteado. Pasos (una sola vez):
    (ya existen). Público (minutos de Actions ilimitados) o privado (4 refrescos/día ≈ 600 min/mes, dentro de los
    2000 gratis). Luego, en la carpeta del proyecto:
    ```bash
-   git remote add origin https://github.com/TU_USUARIO/PolestarTracker.git
+   git remote add origin https://github.com/invernati/PolestarTracker.git
    git push -u origin main
    ```
    (Git pedirá login de GitHub la primera vez: navegador o token.)
 2. En el repo: **Settings → Pages → Build and deployment → Source: "GitHub Actions"**.
 3. **Actions** → workflow *"Refresh inventory & deploy"* → **Run workflow** (o espera al siguiente cron). Al
-   terminar, la web está en `https://TU_USUARIO.github.io/PolestarTracker/` — ábrela en el móvil y añádela a la
+   terminar, la web está en `https://invernati.github.io/PolestarTracker/` — ábrela en el móvil y añádela a la
    pantalla de inicio. Cada refresco commitea `data/` (tracking e historial) y republica.
 4. (Opcional) **Dominio propio**: cómpralo en Cloudflare Registrar / Porkbun (~7-11 €/año), en Pages → *Custom domain*
-   pon `www.tudominio.com`, y en el DNS crea `CNAME www → TU_USUARIO.github.io` (+ registros A del apex que indica
+   pon `www.tudominio.com`, y en el DNS crea `CNAME www → invernati.github.io` (+ registros A del apex que indica
    GitHub). HTTPS automático.
 
 **Avisos al móvil (Telegram o ntfy) de cambios en P3/P4 España** — ya integrados en el workflow (`src/notify.js`),
