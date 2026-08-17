@@ -208,6 +208,7 @@
     if (mode === 'europe') return ms.filter((m) => m.europe).map((m) => m.code);
     if (mode === 'eu') return ms.filter((m) => m.eu).map((m) => m.code);
     if (mode === 'all') return ms.map((m) => m.code);
+    if (mode === 'es') return ms.filter((m) => m.code === 'es').map((m) => m.code);
     return [];
   }
   function updateQuickButtons() {
@@ -368,7 +369,17 @@
       headerDone = true;
       const sc = DATA.scope;
       const scopeTxt = sc ? ` · <span class="scope" title="Último refresco parcial: solo ${sc.markets.join(', ').toUpperCase()} · ${sc.models.join(', ')}${sc.source ? ' · ' + (sc.source === 'stock' ? 'stock' : 'pre-owned') : ''}. El resto de datos son del refresco anterior.">parcial: ${sc.markets.map((m) => m.toUpperCase()).join(', ')} · ${sc.models.join(', ')}${sc.source ? ' · ' + (sc.source === 'stock' ? 'stock' : 'pre-owned') : ''}</span>` : '';
-      $('#updated').innerHTML = `Actualizado: <b>${fmtDateTime(DATA.generatedAt)}</b> <span class="muted">(${DATA.durationSec}s, ${DATA.requestCount} requests)${scopeTxt}</span>`;
+      const rf = DATA.refreshes || {};
+      const esAt = rf.markets && rf.markets.es;
+      const fullAt = rf.full;
+      let txt;
+      if (esAt || fullAt) {
+        // Refrescos por alcance: general (todos los mercados) y España (cada pocos minutos).
+        txt = `Actualizado: general <b>${fullAt ? fmtDateTime(fullAt) : '—'}</b> · España <b>${esAt ? fmtDateTime(esAt) : '—'}</b> <span class="muted">(último run: ${fmtDateTime(DATA.generatedAt)}, ${DATA.durationSec}s, ${DATA.requestCount} requests)${scopeTxt}</span>`;
+      } else {
+        txt = `Actualizado: <b>${fmtDateTime(DATA.generatedAt)}</b> <span class="muted">(${DATA.durationSec}s, ${DATA.requestCount} requests)${scopeTxt}</span>`;
+      }
+      $('#updated').innerHTML = txt;
       $('#cnt-preowned').textContent = tabCount.preowned;
       $('#cnt-stock').textContent = tabCount.stock;
       $('#cnt-offers').textContent = tabCount.offers;

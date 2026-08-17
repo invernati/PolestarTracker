@@ -38,10 +38,11 @@ const onlyModels = (argValue('model') ?? '').split(',').filter(Boolean).map((m) 
 const delayOverride = argValue('delay') != null ? Number(argValue('delay')) : null; // ms entre requests (refrescos parciales rápidos)
 const fast = args.has('--fast');
 const offline = args.has('--offline');
-const historyMode = argValue('history') ?? 'hourly'; // 'hourly' (fichero por hora) | 'daily' (uno por día, se sobrescribe)
+const historyMode = argValue('history') ?? 'hourly'; // 'hourly' (fichero por hora) | 'daily' (uno por día, se sobrescribe) | 'none'
 
 // Orden de modelos por nombre corto (P2, P3, P4, P5) en vez del orden numérico de las claves.
-const MODEL_ENTRIES = Object.entries(MODELS).sort((a, b) => a[1].short.localeCompare(b[1].short))
+const MODEL_ENTRIES_ALL = Object.entries(MODELS).sort((a, b) => a[1].short.localeCompare(b[1].short));
+const MODEL_ENTRIES = MODEL_ENTRIES_ALL
   .filter(([code, m]) => !onlyModels.length || onlyModels.includes(code) || onlyModels.includes(m.short.toUpperCase()));
 
 const SOURCES = {
@@ -267,6 +268,19 @@ async function main() {
   const removed = previous ? previous.vehicles.filter((v) => !seen.has(v.id) && wasQueried(v.source, v.country, v.modelShort)) : [];
   // "Bajadas" = precio menor que en el refresco anterior (el cambio se ha detectado en ESTE refresco).
   const priceDrops = unique.filter((v) => v.priceChange < 0 && v.priceChangeAt === nowIso);
+  const priceRises = unique.filter((v) => v.priceChange > 0 && v.priceChangeAt === nowIso);
+  // Últimos refrescos por alcance (para la cabecera de la web: "General hh:mm · España hh:mm").
+  const refreshes = tracking.refreshes ?? { full: null, markets: {} };
+  if (!offline) {
+    if (!partial) refreshes.full = nowIso;
+    // Un mercado cuenta como "refrescado" si se han consultado todas sus fuentes y modelos configurados.
+    for (const m of markets) {
+      const expected = [];
+      for (const [sourceKey, source] of Object.entries(SOURCES)) if (source.enabledForMarket(m)) for (const [, model] of MODEL_ENTRIES_ALL) if (source.enabledForModel(model)) expected.push(`${sourceKey}:${m.api}:${model.short}`);
+      if (expected.length && expected.every((k) => queriedKeys.has(k))) refreshes.markets[m.api] = nowIso;
+    }
+    tracking.refreshes = refreshes;
+  }
   const campaigns = unique.filter((v) => v.discount > 0);
   // Retirados: resumen para que la web pueda listarlos (ya no están en `vehicles`).
   const removedList = removed.map((v) => ({
@@ -288,8 +302,9 @@ async function main() {
       stock: unique.filter((v) => v.source === 'stock').length,
       added: offline && previous ? previous.totals?.added ?? 0 : added.length,
       removed: offline && previous ? previous.totals?.removed ?? 0 : removed.length,
-      priceDrops: priceDrops.length, campaigns: campaigns.length,
+      priceDrops: priceDrops.length, priceRises: priceRises.length, campaigns: campaigns.length,
     },
+    refreshes,
     previousGeneratedAt: offline && previous ? previous.previousGeneratedAt ?? null : previous?.generatedAt ?? null,
     // Alcance del refresco (null = completo). La web lo muestra junto a la fecha.
     scope: partial ? { markets: markets.map((m) => m.api), models: MODEL_ENTRIES.map(([, m]) => m.short), source: onlySource ?? null } : null,
@@ -309,7 +324,7 @@ async function main() {
       mileageKm: v.mileageKm, vin: v.vin ?? undefined, firstSeen: v.firstSeen,
     })),
   };
-  writeFileSync(join(HISTORY_DIR, `${stamp(startedAt)}.json`), JSON.stringify(snapshot), 'utf8');
+  if (historyMode !== 'none') writeFileSync(join(HISTORY_DIR, `${stamp(startedAt)}.json`), JSON.stringify(snapshot), 'utf8');
   writeFileSync(TRACKING_JSON, JSON.stringify(tracking, null, 1), 'utf8');
   // Copia para la web: misma estructura pero sin los campos que app.js no usa ni los valores vacíos (~30 % menos).
   const web = JSON.stringify({ ...output, vehicles: unique.map(slimForWeb) });
@@ -320,7 +335,10 @@ async function main() {
 
   console.log('');
   console.log(`Total: ${unique.length} vehículos (${output.totals.preowned} pre-owned + ${output.totals.stock} stock) en ${output.durationSec}s (${output.requestCount} requests).`);
-  console.log(`  Nuevos: ${added.length} · Retirados: ${removed.length} · Bajadas de precio: ${priceDrops.length} · Con oferta/descuento: ${campaigns.length}`);
+  console.log(`  Nuevos: ${added.length} · Retirados: ${removed.length} · Bajadas de precio: ${priceDrops.length} · Subidas: ${priceRises.length} · Con oferta/descuento: ${campaigns.length}`);
+  // Para los workflows: ¿ha habido algún cambio real en el inventario? (permite saltarse commit/deploy si no).
+  const changed = added.length + removed.length + priceDrops.length + priceRises.length > 0;
+  writeFileSync(join(DATA_DIR, 'last-run.json'), JSON.stringify({ generatedAt: nowIso, scope: output.scope, changed, added: added.length, removed: removed.length, priceDrops: priceDrops.length, priceRises: priceRises.length }), 'utf8');
   for (const s of Object.values(marketStatus)) {
     const tag = s.status === 'ok' ? 'ok' : s.status === 'empty' ? 'vacío' : s.status === 'partial' ? 'PARCIAL' : 'ERROR';
     const by = Object.entries(s.bySource).map(([k, n]) => `${k} ${n}`).join(', ');

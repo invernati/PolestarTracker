@@ -10,6 +10,8 @@
 //   NOTIFY_EVENTS    new,drop,removed                                      (defecto: new,drop)
 //   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID   → mensaje por Telegram (bot creado con @BotFather)
 //   NTFY_TOPIC (+ NTFY_SERVER, defecto https://ntfy.sh; + NTFY_EMAIL opcional) → notificación push con la app ntfy
+//   SMTP_USER + SMTP_PASS + MAIL_TO (+ SMTP_HOST defecto smtp.gmail.com, SMTP_PORT 465, MAIL_FROM) → email por SMTP/TLS
+//     (Gmail: activa verificación en 2 pasos y crea una "contraseña de aplicación"; SMTP_USER = tu gmail)
 //   SITE_URL         URL de la web publicada, para enlazar en el mensaje (opcional)
 //
 // Uso:  node src/notify.js            → envía si hay cambios que cumplan el filtro
@@ -17,6 +19,7 @@
 //       node src/notify.js --test     → envía un mensaje de prueba aunque no haya cambios
 
 import { readFileSync, existsSync } from 'node:fs';
+import { connect as tlsConnect } from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -100,6 +103,47 @@ async function sendNtfy(text) {
   return true;
 }
 
+// Cliente SMTP mínimo (TLS implícito, puerto 465, AUTH LOGIN). Suficiente para Gmail/Outlook/otros con app password.
+function sendEmail(text) {
+  const user = env('SMTP_USER', ''), pass = env('SMTP_PASS', ''), to = env('MAIL_TO', '');
+  if (!user || !pass || !to) return Promise.resolve(false);
+  const host = env('SMTP_HOST', 'smtp.gmail.com'), port = Number(env('SMTP_PORT', '465')), from = env('MAIL_FROM', user);
+  const subject = 'Polestar Tracker: ' + (text.split('\n')[0] || 'cambios');
+  const b64 = (v) => Buffer.from(v, 'utf8').toString('base64');
+  const CRLF = '\r\n';
+  const body = [
+    `From: Polestar Tracker <${from}>`, `To: ${to}`, `Subject: =?UTF-8?B?${b64(subject)}?=`, 'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '',
+    b64(text).replace(/(.{76})/g, '$1' + CRLF), '',
+  ].join(CRLF);
+  const rcpts = to.split(',').map((x) => x.trim()).filter(Boolean);
+  const steps = [
+    ['', 220], ['EHLO polestar-tracker', 250], ['AUTH LOGIN', 334], [b64(user), 334], [b64(pass), 235],
+    ['MAIL FROM:<' + from + '>', 250], ...rcpts.map((r) => ['RCPT TO:<' + r + '>', 250]), ['DATA', 354], [body + CRLF + '.', 250], ['QUIT', 221],
+  ];
+  return new Promise((resolve, reject) => {
+    const sock = tlsConnect({ host, port, servername: host }, () => step());
+    let i = 0, buf = '';
+    const fail = (m) => { sock.destroy(); reject(new Error('SMTP ' + m)); };
+    sock.setTimeout(20000, () => fail('timeout'));
+    sock.on('error', (e) => reject(new Error('SMTP ' + e.message)));
+    function step() { const [cmd] = steps[i]; if (cmd) sock.write(cmd + CRLF); }
+    sock.on('data', (d) => {
+      buf += d.toString();
+      // Respuesta completa: última línea "NNN " (multilínea usa "NNN-").
+      const lines = buf.split(CRLF).filter(Boolean);
+      const last = lines[lines.length - 1];
+      if (!last || !/^\d{3} /.test(last)) return;
+      const code = Number(last.slice(0, 3)); buf = '';
+      const [, expected] = steps[i];
+      if (code !== expected) return fail('paso "' + (steps[i][0] || 'greeting').slice(0, 12) + '": ' + last.slice(0, 120));
+      i++;
+      if (i >= steps.length) { sock.end(); return resolve(true); }
+      step();
+    });
+  });
+}
+
 async function main() {
   if (!existsSync(INVENTORY_JSON)) { console.log('notify: no hay data/inventory.json'); return; }
   const inv = JSON.parse(readFileSync(INVENTORY_JSON, 'utf8'));
@@ -111,7 +155,9 @@ async function main() {
   const sent = [];
   try { if (await sendTelegram(text)) sent.push('telegram'); } catch (e) { console.error('notify: ' + e.message); process.exitCode = 1; }
   try { if (await sendNtfy(text)) sent.push('ntfy'); } catch (e) { console.error('notify: ' + e.message); process.exitCode = 1; }
-  console.log(sent.length ? `notify: enviado por ${sent.join(' + ')}` : 'notify: ningún canal configurado (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID o NTFY_TOPIC)');
+  try { if (await sendEmail(text)) sent.push('email'); } catch (e) { console.error('notify: ' + e.message); process.exitCode = 1; }
+  const configured = !!(env('TELEGRAM_BOT_TOKEN', '') || env('NTFY_TOPIC', '') || env('SMTP_USER', ''));
+  console.log(sent.length ? `notify: enviado por ${sent.join(' + ')}` : configured ? 'notify: no se pudo enviar por ningún canal (ver errores arriba)' : 'notify: ningún canal configurado (TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID, NTFY_TOPIC o SMTP_USER/SMTP_PASS/MAIL_TO)');
 }
 
 main().catch((e) => { console.error('notify: fallo', e); process.exit(1); });
