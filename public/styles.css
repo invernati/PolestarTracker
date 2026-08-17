@@ -226,3 +226,11 @@ td.loc .ell { display: inline-block; max-width: 220px; overflow: hidden; text-ov
 .btn-refresh-all { border-color: var(--line-strong); background: var(--bg); color: var(--muted); }
 .btn-refresh-all:hover { background: var(--line-strong); color: var(--text); }
 .scope { color: var(--warn); }
+
+/* ---------- móvil: filtros plegables ---------- */
+.filters-toggle { display: none; }
+@media (max-width: 720px) {
+  .filters-toggle { display: inline-block; margin: 2px 12px 8px; font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); cursor: pointer; }
+  .filters-toggle.open { border-color: var(--accent); color: var(--accent); }
+  .filters:not(.open) { display: none; }
+}

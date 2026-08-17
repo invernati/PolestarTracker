@@ -588,6 +588,13 @@
 
   // ---------- eventos ----------
   function bind() {
+    // Móvil: filtros plegados por defecto (botón "Filtros"); en escritorio el botón no se muestra y los filtros siempre se ven.
+    const ft = $('#filters-toggle');
+    ft.addEventListener('click', () => {
+      const open = !$('#filters').classList.contains('open');
+      $('#filters').classList.toggle('open', open); ft.classList.toggle('open', open);
+      ft.setAttribute('aria-expanded', String(open)); ft.textContent = open ? 'Filtros ▴' : 'Filtros ▾';
+    });
     $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('.tab'); if (b) switchTab(b.dataset.tab); });
     const LIVE_INPUTS = '#f-text, #f-price-max, #f-km-max';
     // Los campos de texto/número ya se aplican con 'input'; ignorar su 'change' (al perder el foco) para no
