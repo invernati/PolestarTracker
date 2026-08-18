@@ -1,7 +1,7 @@
 {
- "generatedAt": "2026-08-18T22:48:53.748Z",
- "durationSec": 346,
- "requestCount": 112,
+ "generatedAt": "2026-08-18T22:55:59.615Z",
+ "durationSec": 37,
+ "requestCount": 18,
  "fxToEur": {
   "EUR": 1,
   "GBP": 1.17,
@@ -68,7 +68,7 @@
     "stock:824": 41
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:49:59.969Z"
+   "fetchedAt": "2026-08-18T22:56:36.241Z"
   },
   "fr": {
    "code": "fr",
@@ -97,7 +97,8 @@
     "stock:824": 41
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:50:49.234Z"
+   "fetchedAt": "2026-08-18T22:50:49.234Z",
+   "stale": true
   },
   "nl": {
    "code": "nl",
@@ -126,7 +127,8 @@
     "stock:824": 0
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:51:35.484Z"
+   "fetchedAt": "2026-08-18T22:51:35.484Z",
+   "stale": true
   },
   "be": {
    "code": "be",
@@ -155,7 +157,8 @@
     "stock:824": 0
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:52:22.330Z"
+   "fetchedAt": "2026-08-18T22:52:22.330Z",
+   "stale": true
   },
   "de": {
    "code": "de",
@@ -184,7 +187,8 @@
     "stock:824": 0
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:53:03.463Z"
+   "fetchedAt": "2026-08-18T22:53:03.463Z",
+   "stale": true
   },
   "it": {
    "code": "it",
@@ -213,7 +217,8 @@
     "stock:824": 41
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:53:53.677Z"
+   "fetchedAt": "2026-08-18T22:53:53.677Z",
+   "stale": true
   },
   "pt": {
    "code": "pt",
@@ -242,7 +247,8 @@
     "stock:824": 41
    },
    "errors": [],
-   "fetchedAt": "2026-08-18T22:54:39.545Z"
+   "fetchedAt": "2026-08-18T22:54:39.545Z",
+   "stale": true
   }
  },
  "totals": {
@@ -258,7 +264,7 @@
  "refreshes": {
   "full": "2026-08-18T22:48:53.748Z",
   "markets": {
-   "es": "2026-08-18T22:48:53.748Z",
+   "es": "2026-08-18T22:55:59.615Z",
    "fr": "2026-08-18T22:48:53.748Z",
    "nl": "2026-08-18T22:48:53.748Z",
    "be": "2026-08-18T22:48:53.748Z",
@@ -267,8 +273,19 @@
    "pt": "2026-08-18T22:48:53.748Z"
   }
  },
- "previousGeneratedAt": "2026-08-18T22:42:08.171Z",
- "scope": null,
+ "previousGeneratedAt": "2026-08-18T22:48:53.748Z",
+ "scope": {
+  "markets": [
+   "es"
+  ],
+  "models": [
+   "P2",
+   "P3",
+   "P4",
+   "P5"
+  ],
+  "source": null
+ },
  "trackingSince": "2026-08-17T17:08:10.809Z",
  "removed": [],
  "vehicles": [
