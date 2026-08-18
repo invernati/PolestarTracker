@@ -67,7 +67,7 @@
     return {
       ...x,
       packs: x.packs || [], bundles: x.bundles || [], options: [], packsStr: (x.packs || []).concat(x.bundles || []).join(', '), priceChange: 0, isOffer: false, isNew: false, isDrop: false, isRecent: false,
-      flags: x.flags || {}, removedTs: Date.parse(x.removedAt) || 0,
+      flags: x.flags || {}, removedTs: Date.parse(x.removedAt) || 0, imageStudio: x.image || null, imagePhoto: x.imagePhoto || null, options: x.options || [], discountPct: x.discountPct || 0,
       _search: [x.model, x.variant, x.color, x.countryName, x.country, x.vin, x.modelYear, x.source, (x.packs || []).join(' '), (x.bundles || []).join(' '), x.interior].join(' ').toLowerCase(),
     };
   }
@@ -505,7 +505,7 @@
         <dt>Opciones</dt><dd>${(v.options || []).length ? v.options.map(esc).join(', ') : '—'}</dd>
         ${v.source === 'preowned' ? `<dt>Entrega / vendedor</dt><dd>${esc(v.location || '—')} · ${esc(v.partner || '—')}${v.vatDeductible ? ' · IVA deducible' : ''}</dd>` : `<dt>Entrega estimada</dt><dd>${esc(v.delivery || '—')}${v.deliveryDate ? ' (' + fmtDay(v.deliveryDate) + ')' : ''}</dd>`}
         ${v.source === 'stock' ? `<dt>Precio</dt><dd>${fmtMoney(v.price, v.currency)}${v.discount > 0 ? ` · lista ${fmtMoney(v.listPrice, v.currency)} · <b class="disc">−${fmtMoney(v.discount, v.currency)} (−${v.discountPct}%)</b>` : ' (sin descuento)'}</dd>` : ''}
-        <dt>Seguimiento</dt><dd>Visto por primera vez ${v.firstSeen ? fmtDateTime(v.firstSeen) : '—'} (${v.daysListed ?? '?'} días)${v.versionTimestamp ? ' · anuncio actualizado ' + fmtDateTime(v.versionTimestamp) : ''}</dd>
+        ${v.removedAt ? `<dt>Retirado</dt><dd><b>${fmtDateTime(v.removedAt)}</b> tras ${v.daysListed ?? '?'} días a la venta (visto por primera vez ${v.firstSeen ? fmtDateTime(v.firstSeen) : '—'})${v.partial ? ' · retirado antes de que el tracker guardara todos los detalles' : ''}</dd>` : `<dt>Seguimiento</dt><dd>Visto por primera vez ${v.firstSeen ? fmtDateTime(v.firstSeen) : '—'} (${v.daysListed ?? '?'} días)${v.versionTimestamp ? ' · anuncio actualizado ' + fmtDateTime(v.versionTimestamp) : ''}</dd>`}
         <dt>Histórico precio</dt><dd>${ph || '—'}</dd>
         <dt>Enlace</dt><dd><a class="lnk" href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.url)}</a></dd>
       </dl></div></td></tr>`;
@@ -614,12 +614,12 @@
   }
 
   // Expandir/contraer una fila sin repintar la tabla entera.
+  const salesById = new Map();
   function toggleDetail(tr) {
-    if (tab === 'sales') return;
     const id = tr.dataset.id;
     const next = tr.nextElementSibling;
     if (next && next.classList.contains('detail')) { next.remove(); expanded.delete(id); return; }
-    const v = byId.get(id);
+    const v = tab === 'sales' ? salesById.get(id) : byId.get(id);
     if (!v) return;
     expanded.add(id);
     tr.insertAdjacentHTML('afterend', detailHtml(v));
@@ -975,6 +975,7 @@
     all = data.vehicles.map(decorate);
     SALES = await loadSales();
     sales = (SALES.sales || []).map(decorateSale);
+    for (const x of sales) salesById.set(x.id, x);
     tabCount.sales = sales.length;
     for (const v of all) { byId.set(v.id, v); tabCount[v.source] = (tabCount[v.source] || 0) + 1; if (v.isOffer) tabCount.offers++; if (v.isRecent) tabCount.recent++; }
     // Resolver preset inicial de países y limpiar selecciones guardadas que ya no existen.

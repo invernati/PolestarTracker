@@ -127,6 +127,7 @@ function writeSales(tracking, nowIso) {
     const m = t.meta ?? (bf.id ? { variant: bf.variant, modelYear: bf.modelYear, mileageKm: bf.mileageKm, priceEur: bf.priceEur, price: bf.price, currency: bf.currency, packs: bf.packs ?? [], bundles: bf.bundles ?? [] } : {});
     const days = Math.max(0, Math.round((Date.parse(t.removedAt) - Date.parse(t.firstSeen)) / 86400000));
     sales.push({
+      ...m,
       id, source: t.source, country: t.country, countryName: m.countryName ?? names[t.country] ?? t.country,
       modelShort: t.model, model: m.model ?? modelName(t.model), variant: m.variant ?? null, modelYear: m.modelYear ?? null,
       mileageKm: m.mileageKm ?? null, color: m.color ?? null, price: m.price ?? t.priceHistory?.[t.priceHistory.length - 1]?.price ?? null,
@@ -292,7 +293,12 @@ async function main() {
     t.source = v.source;
     t.vin = v.vin;
     // Metadatos para el histórico de ventas (public/data/sales.json): se actualizan mientras el coche está a la venta.
-    t.meta = { model: v.model, variant: v.variant, modelYear: v.modelYear, mileageKm: v.mileageKm, color: v.color, price: v.price, currency: v.currency, priceEur: v.priceEur, url: v.url, image: v.imageStudio, countryName: v.countryName, listPrice: v.listPrice ?? null, discount: v.discount || 0, single: !!v.flags?.single, coupe: !!v.flags?.coupe, packs: v.packs ?? [], bundles: v.bundles ?? [], interior: v.interior ?? null };
+    t.meta = { model: v.model, variant: v.variant, modelYear: v.modelYear, mileageKm: v.mileageKm, color: v.color, price: v.price, currency: v.currency, priceEur: v.priceEur, url: v.url, image: v.imageStudio, countryName: v.countryName, listPrice: v.listPrice ?? null, discount: v.discount || 0, single: !!v.flags?.single, coupe: !!v.flags?.coupe, packs: v.packs ?? [], bundles: v.bundles ?? [], interior: v.interior ?? null,
+      // Detalle completo (para la ficha del coche en la pestaña Ventas)
+      displayName: v.displayName ?? null, motorLabel: v.motorLabel ?? null, wheels: v.wheels ?? null, options: v.options ?? [], drivetrain: v.drivetrain ?? null,
+      power: v.power ?? null, acceleration: v.acceleration ?? null, rangeKm: v.rangeKm ?? null, firstRegistration: v.firstRegistration ?? null,
+      delivery: v.delivery ?? null, deliveryDate: v.deliveryDate ?? null, vatDeductible: v.vatDeductible ?? null, location: v.location ?? null, partner: v.partner ?? null,
+      pno34: v.pno34 ?? null, structureWeek: v.structureWeek ?? null, imagePhoto: v.imagePhoto ?? null, discountPct: v.discountPct ?? 0 };
     const last = t.priceHistory[t.priceHistory.length - 1];
     if (!last || last.price !== v.price || last.currency !== v.currency) {
       t.priceHistory.push({ t: nowIso, price: v.price, currency: v.currency });
