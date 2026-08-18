@@ -13,7 +13,7 @@
 //       node src/fetch.js --fast            → sin pausas (depuración)
 //       node src/fetch.js --history=daily   → un snapshot por día en data/history (en vez de uno por hora)
 
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { MARKETS, MODELS, DELAY_BETWEEN_REQUESTS_MS, DELAY_BETWEEN_PAGES_MS, FX_TO_EUR } from './config.js';
@@ -105,6 +105,49 @@ function stamp(d = new Date()) {
   return historyMode === 'daily' ? day : `${day}_${p(d.getHours())}`;
 }
 
+/** Histórico de "ventas": vehículos retirados del inventario (y no reaparecidos). Se publica en public/data/sales.{js,json}. */
+function writeSales(tracking, nowIso) {
+  const configured = new Set(MARKETS.map((m) => m.api));
+  // Relleno para retirados anteriores a que el tracking guardara metadatos: los snapshots compactos del historial
+  // (data/history/*.json) tienen variant, modelYear, mileageKm, priceEur y vin por id.
+  const backfill = new Map();
+  try {
+    const files = readdirSync(HISTORY_DIR).filter((f) => f.endsWith('.json')).sort();
+    for (const f of files) {
+      const snap = loadJson(join(HISTORY_DIR, f), null);
+      for (const v of snap?.vehicles ?? []) backfill.set(v.id, v); // el más reciente pisa al anterior
+    }
+  } catch { /* sin historial */ }
+  const names = Object.fromEntries(MARKETS.map((m) => [m.api, m.name]));
+  const modelName = (short) => Object.values(MODELS).find((m) => m.short === short)?.name ?? short;
+  const sales = [];
+  for (const [id, t] of Object.entries(tracking.vehicles)) {
+    if (!t.removedAt || !configured.has(t.country)) continue;
+    const bf = backfill.get(id) ?? {};
+    const m = t.meta ?? (bf.id ? { variant: bf.variant, modelYear: bf.modelYear, mileageKm: bf.mileageKm, priceEur: bf.priceEur, price: bf.price, currency: bf.currency } : {});
+    const days = Math.max(0, Math.round((Date.parse(t.removedAt) - Date.parse(t.firstSeen)) / 86400000));
+    sales.push({
+      id, source: t.source, country: t.country, countryName: m.countryName ?? names[t.country] ?? t.country,
+      modelShort: t.model, model: m.model ?? modelName(t.model), variant: m.variant ?? null, modelYear: m.modelYear ?? null,
+      mileageKm: m.mileageKm ?? null, color: m.color ?? null, price: m.price ?? t.priceHistory?.[t.priceHistory.length - 1]?.price ?? null,
+      currency: m.currency ?? t.priceHistory?.[t.priceHistory.length - 1]?.currency ?? 'EUR',
+      priceEur: m.priceEur ?? ((m.currency ?? t.priceHistory?.[t.priceHistory.length - 1]?.currency ?? 'EUR') === 'EUR' ? (m.price ?? t.priceHistory?.[t.priceHistory.length - 1]?.price ?? null) : null),
+      listPrice: m.listPrice ?? null, discount: m.discount ?? 0, firstSeen: t.firstSeen, removedAt: t.removedAt, daysListed: days,
+      priceHistory: t.priceHistory ?? [], url: m.url ?? null, image: m.image ?? null,
+      flags: { single: !!m.single, coupe: !!m.coupe },
+      vin: t.vin ?? bf.vin ?? null,
+      // Sin metadatos ni snapshot (retirado antes de que se guardaran): la web lo mostrará con menos detalle.
+      partial: !t.meta && !bf.id,
+    });
+  }
+  sales.sort((a, b) => (a.removedAt < b.removedAt ? 1 : -1));
+  const out = { generatedAt: nowIso, trackingSince: tracking.trackingSince ?? null, count: sales.length, sales };
+  const json = JSON.stringify(out);
+  writeFileSync(join(PUBLIC_DATA_DIR, 'sales.json'), json, 'utf8');
+  writeFileSync(join(PUBLIC_DATA_DIR, 'sales.js'), "window.__SALES__=JSON.parse('" + json.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "');\n", 'utf8');
+  return sales.length;
+}
+
 async function main() {
   const startedAt = new Date();
   const wallStart = Date.now();
@@ -117,6 +160,7 @@ async function main() {
 
   const previous = loadJson(INVENTORY_JSON, null);
   const tracking = loadJson(TRACKING_JSON, { vehicles: {} });
+  for (const t of Object.values(tracking.vehicles)) if (t.removedAt && !t.removals) t.removals = [{ t: t.removedAt }];
   // --offline renormaliza los MISMOS datos del último refresco real: se conserva su fecha/hora para que
   // el tracking (lastSeen, historial de precios) y la cabecera de la web no cambien.
   if (offline && previous?.generatedAt) startedAt.setTime(Date.parse(previous.generatedAt));
@@ -227,18 +271,27 @@ async function main() {
   // Tracking: primera vez visto / última vez / histórico de precios (para análisis y pestaña Ofertas).
   const nowIso = startedAt.toISOString();
   // ¿Se ha consultado (con éxito) en esta ejecución el inventario al que pertenece este vehículo/registro de tracking?
-  const wasQueried = (source, country, modelShort) => queriedKeys.has(`${source}:${country}:${modelShort}`);
+  // En --offline los datos crudos pueden ser antiguos: no se marca nada como retirado ni se altera el tracking de retiradas.
+  const wasQueried = (source, country, modelShort) => !offline && queriedKeys.has(`${source}:${country}:${modelShort}`);
   for (const v of unique) {
     if (v._carried) { delete v._carried; continue; } // no consultado en esta ejecución: se deja como estaba
     const t = tracking.vehicles[v.id] ?? { firstSeen: nowIso, priceHistory: [] };
     t.lastSeen = nowIso;
     // Un vehículo que había desaparecido y vuelve a aparecer se trata como alta nueva (relistado):
     // cuenta como "nuevo" y sus días en venta empiezan de cero (el histórico de precios se conserva).
-    if (t.removedAt) { t.relistedAt = nowIso; t.firstSeen = nowIso; delete t.removedAt; }
+    if (t.removedAt) {
+      t.relistedAt = nowIso; t.firstSeen = nowIso;
+      // El histórico de retiradas conserva el episodio, marcado como relistado (deja de contar como venta).
+      t.removals = t.removals ?? []; const last = t.removals[t.removals.length - 1];
+      if (last && !last.relistedAt) last.relistedAt = nowIso;
+      delete t.removedAt;
+    }
     t.country = v.country;
     t.model = v.modelShort;
     t.source = v.source;
     t.vin = v.vin;
+    // Metadatos para el histórico de ventas (public/data/sales.json): se actualizan mientras el coche está a la venta.
+    t.meta = { model: v.model, variant: v.variant, modelYear: v.modelYear, mileageKm: v.mileageKm, color: v.color, price: v.price, currency: v.currency, priceEur: v.priceEur, url: v.url, image: v.imageStudio, countryName: v.countryName, listPrice: v.listPrice ?? null, discount: v.discount || 0, single: !!v.flags?.single, coupe: !!v.flags?.coupe };
     const last = t.priceHistory[t.priceHistory.length - 1];
     if (!last || last.price !== v.price || last.currency !== v.currency) {
       t.priceHistory.push({ t: nowIso, price: v.price, currency: v.currency });
@@ -256,7 +309,10 @@ async function main() {
   }
   // Marcar como retirados los que estaban y ya no aparecen (solo si su mercado respondió bien).
   for (const [id, t] of Object.entries(tracking.vehicles)) {
-    if (!seen.has(id) && !t.removedAt && wasQueried(t.source, t.country, t.model)) t.removedAt = nowIso;
+    if (!seen.has(id) && !t.removedAt && wasQueried(t.source, t.country, t.model)) {
+      t.removedAt = nowIso;
+      t.removals = t.removals ?? []; t.removals.push({ t: nowIso });
+    }
   }
   tracking.updatedAt = nowIso;
   // Momento del primer refresco de la historia: lo que ya estaba entonces es "inventario base", no "nuevo".
@@ -332,6 +388,7 @@ async function main() {
   // de varios MB) y sigue funcionando por file:// (por eso existe este .js además del .json).
   writeFileSync(PUBLIC_INVENTORY_JS, "window.__INVENTORY__=JSON.parse('" + web.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "');\n", 'utf8');
   writeFileSync(PUBLIC_INVENTORY_JSON, web, 'utf8');
+  writeSales(tracking, nowIso);
 
   console.log('');
   console.log(`Total: ${unique.length} vehículos (${output.totals.preowned} pre-owned + ${output.totals.stock} stock) en ${output.durationSec}s (${output.requestCount} requests).`);
@@ -344,7 +401,7 @@ async function main() {
     const by = Object.entries(s.bySource).map(([k, n]) => `${k} ${n}`).join(', ');
     console.log(`  ${s.flag} ${s.name.padEnd(13)} ${String(s.count).padStart(4)}  ${tag.padEnd(7)} ${by}${s.errors.length ? '  ' + s.errors.join(' | ') : ''}${s.note ? '  (' + s.note + ')' : ''}`);
   }
-  console.log(`\nEscrito: data/inventory.json, data/history/${stamp(startedAt)}.json, data/tracking.json, public/data/inventory.{js,json}`);
+  console.log(`\nEscrito: data/inventory.json, data/history/${stamp(startedAt)}.json, data/tracking.json, public/data/inventory.{js,json}, public/data/sales.{js,json}`);
   console.log('Abrir la web:  npm run serve   →  http://localhost:8787');
 }
 

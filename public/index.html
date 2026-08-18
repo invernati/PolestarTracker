@@ -22,6 +22,7 @@
       <button type="button" class="tab" data-tab="stock">Nuevos en stock <span class="tab-count" id="cnt-stock">–</span></button>
       <button type="button" class="tab" data-tab="offers">Ofertas y bajadas <span class="tab-count" id="cnt-offers">–</span></button>
       <button type="button" class="tab" data-tab="recent" title="Nuevos y bajadas de precio detectados en las últimas 24 horas">Últimas 24 h <span class="tab-count" id="cnt-recent">–</span></button>
+      <button type="button" class="tab" data-tab="sales" title="Histórico de vehículos retirados del inventario (≈ vendidos): gráfica mensual, modelo más vendido, días en venta">Ventas <span class="tab-count" id="cnt-sales">–</span></button>
     </nav>
     <button type="button" class="btn-alerts" id="alerts-open" title="Avisos por Telegram / ntfy / email según filtros">🔔 Avisos <span class="tab-count" id="cnt-alerts">–</span></button>
   </header>
@@ -75,6 +76,17 @@
     <div class="table-wrap-inner"><table class="removed-table"><thead><tr><th></th><th>Tipo</th><th>Modelo</th><th>Versión</th><th class="num">MY</th><th class="num">Km</th><th class="num">Precio</th><th>Color</th><th>Ubicación</th><th>País</th><th class="num">Días visto</th><th></th></tr></thead><tbody id="removed-rows"></tbody></table></div>
   </section>
 
+  <section class="sales hidden" id="sales-panel">
+    <div class="sales-note muted small">Un coche cuenta como <b>vendido</b> cuando desaparece del inventario oficial y no reaparece (puede ser venta, reserva o retirada del anuncio). Datos desde <span id="sales-since">—</span>. Los filtros de arriba se aplican también aquí.</div>
+    <div class="kpis" id="sales-kpis"></div>
+    <div class="chart-head">
+      <b>Retirados por <span id="chart-period-label">mes</span> y modelo</b>
+      <span class="quick"><button type="button" data-period="month" class="on">Mes</button><button type="button" data-period="week">Semana</button><button type="button" data-period="day">Día</button></span>
+      <span class="legend" id="sales-legend"></span>
+    </div>
+    <div class="chart-wrap"><svg id="sales-chart" role="img" aria-label="Retirados por periodo y modelo"></svg><div id="chart-tip" class="chart-tip hidden"></div></div>
+  </section>
+
   <section class="summary" id="summary"></section>
 
   <div class="table-wrap">
@@ -126,6 +138,7 @@
   </footer>
 
   <script src="data/inventory.js"></script>
+  <script src="data/sales.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -10,6 +10,8 @@
 
   let DATA = null;
   let all = [];            // todos los vehículos (con campos derivados)
+  let sales = [];          // histórico de retirados/vendidos (public/data/sales.json)
+  let SALES = null;
   let tab = 'preowned';
   let sortKey = 'priceEur';
   let sortDesc = false;
@@ -54,6 +56,20 @@
       if (r.ok) return await r.json();
     } catch { /* ignore */ }
     return null;
+  }
+
+  async function loadSales() {
+    if (window.__SALES__) return window.__SALES__;
+    try { const r = await fetch('data/sales.json', { cache: 'no-store' }); if (r.ok) return await r.json(); } catch { /* ignore */ }
+    return { sales: [], trackingSince: null };
+  }
+  function decorateSale(x) {
+    return {
+      ...x,
+      packs: [], bundles: [], options: [], packsStr: '', priceChange: 0, isOffer: false, isNew: false, isDrop: false, isRecent: false,
+      flags: x.flags || {}, removedTs: Date.parse(x.removedAt) || 0,
+      _search: [x.model, x.variant, x.color, x.countryName, x.country, x.vin, x.modelYear, x.source].join(' ').toLowerCase(),
+    };
   }
 
   // ---------- formato ----------
@@ -129,8 +145,9 @@
   const H24 = 24 * 3600 * 1000;
   let GEN_TS = 0;
 
-  const inTab = (v) => tab === 'offers' ? v.isOffer : tab === 'recent' ? v.isRecent : v.source === tab;
-  const tabCount = { preowned: 0, stock: 0, offers: 0, recent: 0 }; // se rellena al cargar
+  const inTab = (v) => tab === 'sales' ? true : tab === 'offers' ? v.isOffer : tab === 'recent' ? v.isRecent : v.source === tab;
+  const poolFor = (t) => (t === 'sales' ? sales : all);
+  const tabCount = { preowned: 0, stock: 0, offers: 0, recent: 0, sales: 0 }; // se rellena al cargar
   const byId = new Map();
 
   // ---------- filtros ----------
@@ -138,7 +155,7 @@
   const modelName = (s) => (DATA.models && Object.values(DATA.models).find((m) => m.short === s)?.name) || s;
 
   function buildFilterUI() {
-    const pool = all.filter(inTab);
+    const pool = poolFor(tab).filter(inTab);
     const models = uniqueSorted(all.map((v) => v.modelShort));
     const variants = uniqueSorted(all.map((v) => v.variant), (a, b) => {
       const ia = VARIANT_ORDER.indexOf(a), ib = VARIANT_ORDER.indexOf(b);
@@ -224,7 +241,7 @@
     const priceMax = f.priceMax ? Number(f.priceMax) : null;
     const kmMax = f.kmMax ? Number(f.kmMax) : null;
     const q = f.text.toLowerCase();
-    return all.filter((v) => {
+    return poolFor(tab).filter((v) => {
       if (!inTab(v)) return false;
       if (f.models && !f.models.includes(v.modelShort)) return false;
       if (f.variants && !f.variants.includes(v.variant)) return false;
@@ -232,10 +249,12 @@
       if (f.countries && !f.countries.includes(v.country)) return false;
       if (f.hideSingle && v.flags.single) return false;
       if (f.hideCoupe && v.flags.coupe) return false;
-      if (f.vatOnly && tab !== 'stock' && v.source === 'preowned' && !v.vatDeductible) return false;
-      if (f.campaignOnly && tab !== 'preowned' && v.source === 'stock' && !(v.discount > 0)) return false;
-      if (f.onlyNew && !v.isNew) return false;
-      if (f.onlyDrops && !v.isDrop) return false;
+      if (tab !== 'sales') {
+        if (f.vatOnly && tab !== 'stock' && v.source === 'preowned' && !v.vatDeductible) return false;
+        if (f.campaignOnly && tab !== 'preowned' && v.source === 'stock' && !(v.discount > 0)) return false;
+        if (f.onlyNew && !v.isNew) return false;
+        if (f.onlyDrops && !v.isDrop) return false;
+      }
       if (priceMax != null && (v.priceEur == null || v.priceEur > priceMax)) return false;
       if (kmMax != null && v.source === 'preowned' && (v.mileageKm == null || v.mileageKm > kmMax)) return false;
       if (q && !v._search.includes(q)) return false;
@@ -338,7 +357,22 @@
     { key: 'countryName', label: 'País', render: countryCell },
     { key: null, label: '', render: linkCell },
   ];
-  const DEFAULT_SORT = { preowned: { key: 'priceEur', desc: false }, stock: { key: 'priceEur', desc: false }, offers: { key: 'dropPct', desc: true }, recent: { key: 'recentTs', desc: true } };
+  const thumbSale = (v) => v.image ? `<img loading="lazy" decoding="async" width="84" height="46" src="${esc(v.image)}" alt="" />` : '';
+  COLUMNS.sales = [
+    { key: null, label: '', cls: 'thumb', render: thumbSale },
+    { key: 'removedTs', label: 'Retirado', render: (v) => fmtDateTime(v.removedAt) },
+    { key: 'source', label: 'Tipo', render: (v) => `<span class="badge src">${v.source === 'stock' ? 'nuevo (stock)' : 'pre-owned'}</span>` },
+    { key: 'model', label: 'Modelo', render: (v) => `<b>${esc(v.model)}</b>${v.flags.coupe ? '<span class="badge warn">MY27/Coupé</span>' : ''}${v.partial ? '<span class="sub muted">retirado antes de guardar detalles</span>' : ''}` },
+    { key: 'variant', label: 'Versión', render: (v) => esc(v.variant || '—') },
+    { key: 'modelYear', label: 'MY', cls: 'num', render: (v) => v.modelYear ?? '—' },
+    { key: 'mileageKm', label: 'Km', cls: 'num', render: (v) => v.source === 'stock' ? '<span class="muted">nuevo</span>' : (v.mileageKm != null ? nf0.format(v.mileageKm) : '—') },
+    { key: 'price', label: 'Último precio', cls: 'num price', render: (v) => fmtMoney(v.price, v.currency) + (v.priceHistory && v.priceHistory.length > 1 ? `<span class="sub">inicial ${fmtMoney(v.priceHistory[0].price, v.currency)}</span>` : '') },
+    { key: 'color', label: 'Color', render: (v) => esc(v.color || '—') },
+    { key: 'daysListed', label: 'Días en venta', cls: 'num', title: 'Días entre la primera vez que el tracker lo vio y su retirada', render: (v) => v.daysListed ?? '—' },
+    { key: 'countryName', label: 'País', render: countryCell },
+    { key: null, label: '', render: (v) => v.url ? `<a class="lnk" href="${esc(v.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="La ficha puede ya no existir">Ficha ↗</a>` : '' },
+  ];
+  const DEFAULT_SORT = { preowned: { key: 'priceEur', desc: false }, stock: { key: 'priceEur', desc: false }, offers: { key: 'dropPct', desc: true }, recent: { key: 'recentTs', desc: true }, sales: { key: 'removedTs', desc: true } };
 
   // ---------- render ----------
   function badges(v) {
@@ -360,7 +394,7 @@
   function countryCount(code) {
     const k = tab + '|' + code;
     let n = countByCountryTab.get(k);
-    if (n === undefined) { n = 0; for (const v of all) if (v.country === code && inTab(v)) n++; countByCountryTab.set(k, n); }
+    if (n === undefined) { n = 0; for (const v of poolFor(tab)) if (v.country === code && inTab(v)) n++; countByCountryTab.set(k, n); }
     return n;
   }
 
@@ -384,6 +418,7 @@
       $('#cnt-stock').textContent = tabCount.stock;
       $('#cnt-offers').textContent = tabCount.offers;
       $('#cnt-recent').textContent = tabCount.recent;
+      $('#cnt-sales').textContent = tabCount.sales;
     }
     $$('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
     renderStats();
@@ -503,6 +538,8 @@
   function render() {
     const rows = sortRows(applyFilters());
     renderHeader();
+    $('#sales-panel').classList.toggle('hidden', tab !== 'sales');
+    if (tab === 'sales') renderSalesPanel(rows);
     renderSummary(rows);
     renderHead();
     view.rows = rows; view.shown = 0;
@@ -577,6 +614,7 @@
 
   // Expandir/contraer una fila sin repintar la tabla entera.
   function toggleDetail(tr) {
+    if (tab === 'sales') return;
     const id = tr.dataset.id;
     const next = tr.nextElementSibling;
     if (next && next.classList.contains('detail')) { next.remove(); expanded.delete(id); return; }
@@ -692,6 +730,112 @@
     });
   }
 
+
+  // ---------- Ventas: KPIs y gráfica (SVG sin dependencias) ----------
+  const SERIES = { P2: 'var(--s1)', P3: 'var(--s2)', P4: 'var(--s3)', P5: 'var(--s4)' };
+  const SERIES_ORDER = ['P2', 'P3', 'P4', 'P5'];
+  let chartPeriod = state.chartPeriod || 'month';
+  const median = (arr) => { if (!arr.length) return null; const a = arr.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+  const top = (rows, keyFn) => { const c = new Map(); for (const r of rows) { const k = keyFn(r); if (!k) continue; c.set(k, (c.get(k) || 0) + 1); } return [...c.entries()].sort((a, b) => b[1] - a[1]); };
+  function periodKey(iso, period) {
+    const d = new Date(iso);
+    if (period === 'month') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (period === 'day') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // semana ISO (lunes)
+    const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = x.getUTCDay() || 7; x.setUTCDate(x.getUTCDate() + 4 - day);
+    const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+    return `${x.getUTCFullYear()}-S${String(Math.ceil(((x - y0) / 86400000 + 1) / 7)).padStart(2, '0')}`;
+  }
+  function periodLabel(k, period) {
+    if (period === 'month') { const [y, m] = k.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }); }
+    if (period === 'day') { const [y, m, d] = k.split('-'); return `${d}/${m}`; }
+    return k.replace(/^\d{4}-/, '');
+  }
+  function periodSeq(fromIso, toIso, period) {
+    // Todas las claves de periodo entre from y to (inclusive), para pintar también los periodos con 0.
+    const keys = []; const d = new Date(fromIso), end = new Date(toIso);
+    d.setHours(0, 0, 0, 0);
+    if (period === 'month') d.setDate(1);
+    if (period === 'week') { const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1); }
+    for (let i = 0; i < 400 && d <= end; i++) {
+      keys.push(periodKey(d.toISOString(), period));
+      if (period === 'month') d.setMonth(d.getMonth() + 1); else d.setDate(d.getDate() + (period === 'week' ? 7 : 1));
+    }
+    return [...new Set(keys)];
+  }
+
+  function renderSalesPanel(rows) {
+    $('#sales-since').textContent = SALES?.trackingSince ? fmtDay(SALES.trackingSince) : '—';
+    // KPIs
+    const n = rows.length;
+    const byModel = top(rows, (r) => r.model);
+    const byCar = top(rows, (r) => r.variant ? `${r.model} ${r.variant}` : null);
+    const byCountry = top(rows, (r) => r.countryName);
+    const days = rows.map((r) => r.daysListed).filter((x) => x != null);
+    const eur = rows.map((r) => r.priceEur).filter((x) => x != null);
+    const pre = rows.filter((r) => r.source === 'preowned').length;
+    const kpi = (label, value, sub) => `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
+    $('#sales-kpis').innerHTML = [
+      kpi('Retirados / vendidos', n, n ? `${pre} pre-owned · ${n - pre} stock` : 'aún sin datos'),
+      kpi('Modelo más vendido', byModel[0] ? esc(byModel[0][0]) : '—', byModel[0] ? `${byModel[0][1]} (${Math.round((byModel[0][1] / n) * 100)} %)${byModel[1] ? ' · 2º ' + esc(byModel[1][0]) + ' ' + byModel[1][1] : ''}` : ''),
+      kpi('Coche más vendido', byCar[0] ? esc(byCar[0][0]) : '—', byCar[0] ? `${byCar[0][1]} unidades${byCar[1] ? ' · 2º ' + esc(byCar[1][0]) + ' ' + byCar[1][1] : ''}` : ''),
+      kpi('País con más ventas', byCountry[0] ? esc(byCountry[0][0]) : '—', byCountry.slice(1, 3).map((x) => esc(x[0]) + ' ' + x[1]).join(' · ')),
+      kpi('Días en venta (mediana)', days.length ? median(days) : '—', days.length ? `media ${Math.round(days.reduce((a, b) => a + b, 0) / days.length)} · máx ${Math.max(...days)}` : ''),
+      kpi('Precio medio (≈ EUR)', eur.length ? fmtMoney(Math.round(eur.reduce((a, b) => a + b, 0) / eur.length), 'EUR') : '—', eur.length ? `mediana ${fmtMoney(median(eur), 'EUR')}` : ''),
+    ].join('');
+    // Gráfica
+    $$('[data-period]').forEach((b) => b.classList.toggle('on', b.dataset.period === chartPeriod));
+    $('#chart-period-label').textContent = chartPeriod === 'month' ? 'mes' : chartPeriod === 'week' ? 'semana' : 'día';
+    const svg = $('#sales-chart');
+    const from = SALES?.trackingSince || (rows.length ? rows[rows.length - 1].removedAt : DATA.generatedAt);
+    let keys = periodSeq(from, DATA.generatedAt, chartPeriod);
+    const MAXP = chartPeriod === 'month' ? 12 : chartPeriod === 'week' ? 16 : 31;
+    if (keys.length > MAXP) keys = keys.slice(-MAXP);
+    const models = SERIES_ORDER.filter((m) => rows.some((r) => r.modelShort === m));
+    const counts = new Map(keys.map((k) => [k, Object.fromEntries(models.map((m) => [m, 0]))]));
+    for (const r of rows) { const k = periodKey(r.removedAt, chartPeriod); if (counts.has(k)) counts.get(k)[r.modelShort]++; }
+    const totals = keys.map((k) => Object.values(counts.get(k)).reduce((a, b) => a + b, 0));
+    const max = Math.max(1, ...totals);
+    const W = Math.max(320, Math.min(1400, svg.clientWidth || 800)), H = 240, padL = 34, padR = 12, padT = 18, padB = 26;
+    const cw = (W - padL - padR) / keys.length, bw = Math.min(64, cw * 0.62);
+    const y = (v) => padT + (H - padT - padB) * (1 - v / max);
+    const ticks = max <= 5 ? [...Array(max + 1).keys()] : [0, Math.round(max / 2), max];
+    let out = `<g class="grid">${ticks.map((t) => `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" /><text x="${padL - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join('')}</g>`;
+    out += `<line class="axis" x1="${padL}" x2="${W - padR}" y1="${y(0)}" y2="${y(0)}" />`;
+    keys.forEach((k, i) => {
+      const x0 = padL + cw * i + (cw - bw) / 2;
+      let acc = 0;
+      const segs = models.map((m) => [m, counts.get(k)[m]]).filter(([, c]) => c > 0);
+      segs.forEach(([m, c], j) => {
+        const y1 = y(acc + c), y2 = y(acc); acc += c;
+        const gap = j < segs.length - 1 ? 2 : 0; // 2px de separación entre segmentos
+        const h = Math.max(0, y2 - y1 - gap);
+        const rx = j === segs.length - 1 ? 3 : 0;
+        out += `<rect class="seg" x="${x0}" y="${y1}" width="${bw}" height="${h}" rx="${rx}" fill="${SERIES[m]}" data-tip="${esc(`${periodLabel(k, chartPeriod)} · ${m}: ${c} de ${totals[i]}`)}"></rect>`;
+      });
+      if (totals[i]) out += `<text class="total" x="${x0 + bw / 2}" y="${y(totals[i]) - 4}" text-anchor="middle">${totals[i]}</text>`;
+      const every = keys.length > 16 ? Math.ceil(keys.length / 12) : 1;
+      if (i % every === 0 || i === keys.length - 1) out += `<text x="${x0 + bw / 2}" y="${H - 8}" text-anchor="middle">${esc(periodLabel(k, chartPeriod))}</text>`;
+    });
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = out;
+    $('#sales-legend').innerHTML = models.map((m) => `<span><span class="sw" style="background:${SERIES[m]}"></span>${modelName(m)} <b>${rows.filter((r) => r.modelShort === m).length}</b></span>`).join('');
+  }
+  function bindSales() {
+    $$('[data-period]').forEach((b) => b.addEventListener('click', () => { chartPeriod = b.dataset.period; state.chartPeriod = chartPeriod; saveState(); render(); }));
+    const tip = $('#chart-tip'), wrap = $('.chart-wrap');
+    $('#sales-chart').addEventListener('mousemove', (e) => {
+      const r = e.target.closest('rect.seg');
+      if (!r) { tip.classList.add('hidden'); return; }
+      tip.textContent = r.dataset.tip; tip.classList.remove('hidden');
+      const box = wrap.getBoundingClientRect();
+      tip.style.left = Math.min(box.width - tip.offsetWidth - 8, e.clientX - box.left + 12) + 'px';
+      tip.style.top = (e.clientY - box.top - 34) + 'px';
+    });
+    $('#sales-chart').addEventListener('mouseleave', () => tip.classList.add('hidden'));
+    window.addEventListener('resize', () => { if (tab === 'sales') render(); });
+  }
 
   // ---------- 🔔 Avisos: alertas guardadas en public/alerts.json (las lee src/notify.js tras cada refresco) ----------
   const REPO = (() => {
@@ -820,7 +964,7 @@
   }
 
   // ---------- init ----------
-  loadData().then((data) => {
+  loadData().then(async (data) => {
     if (!data) {
       $('#updated').innerHTML = 'Sin datos. Ejecuta <code>npm run refresh</code> y recarga.';
       return;
@@ -828,6 +972,9 @@
     DATA = data;
     GEN_TS = Date.parse(DATA.generatedAt) || Date.now();
     all = data.vehicles.map(decorate);
+    SALES = await loadSales();
+    sales = (SALES.sales || []).map(decorateSale);
+    tabCount.sales = sales.length;
     for (const v of all) { byId.set(v.id, v); tabCount[v.source] = (tabCount[v.source] || 0) + 1; if (v.isOffer) tabCount.offers++; if (v.isRecent) tabCount.recent++; }
     // Resolver preset inicial de países y limpiar selecciones guardadas que ya no existen.
     if (state.filters.countries === 'europe') state.filters.countries = countriesForPreset('europe');
@@ -841,5 +988,6 @@
     switchTab(state.tab && COLUMNS[state.tab] ? state.tab : 'preowned');
     initRefreshButton();
     bindAlerts();
+    bindSales();
   });
 })();
