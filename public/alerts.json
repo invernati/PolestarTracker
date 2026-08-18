@@ -1,20 +1,34 @@
 {
-  "_doc": "Alertas del notificador (src/notify.js). Cada alerta filtra los cambios del último refresco y se envía por todos los canales configurados (Telegram / ntfy / email). Listas vacías = sin restricción. Se edita desde la web (🔔 Avisos) o a mano.",
+  "_doc": "Alertas del notificador (src/notify.js). Cada alerta filtra los cambios del último refresco y se envía por todos los canales configurados (Telegram / ntfy / email). Listas vacías = sin restricción. Se edita desde la web (🔔 Avisos) o a mano. Nota: \"Performance\" es la variante Dual Motor con pack Performance (P3); si no la quieres, quítala desde la web.",
   "alerts": [
     {
-      "id": "espana-p3-p4",
-      "name": "España · Polestar 3 y 4",
+      "id": "espana-p3-p4-dual",
+      "name": "España · Polestar 3 y 4 · Dual Motor",
       "enabled": true,
-      "markets": ["es"],
-      "models": ["P3", "P4"],
-      "sources": ["preowned", "stock"],
-      "variants": [],
+      "markets": [
+        "es"
+      ],
+      "models": [
+        "P3",
+        "P4"
+      ],
+      "sources": [
+        "preowned",
+        "stock"
+      ],
+      "variants": [
+        "Dual Motor",
+        "Performance"
+      ],
       "years": [],
       "priceMaxEur": null,
       "kmMax": null,
-      "hideSingle": false,
+      "hideSingle": true,
       "hideCoupe": false,
-      "events": ["new", "drop"]
+      "events": [
+        "new",
+        "drop"
+      ]
     }
   ]
 }
