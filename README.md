@@ -169,7 +169,14 @@ solo hay que configurar el canal en Settings → *Secrets and variables* → *Ac
   el mismo). Por defecto usa Gmail (`smtp.gmail.com:465`): activa la verificación en 2 pasos y crea una **contraseña
   de aplicación** en https://myaccount.google.com/apppasswords (16 letras) → esa es `SMTP_PASS`. Otros proveedores:
   `SMTP_HOST`, `SMTP_PORT` (465, TLS implícito) y `MAIL_FROM`.
-- Qué se vigila (Variables, no secrets; valores por defecto entre paréntesis): `NOTIFY_MARKETS` (`es`),
+- **Qué se vigila: desde la web, botón 🔔 Avisos.** Ajusta los filtros (países, modelos, Dual/Single, año, precio máx.,
+  km máx., pestaña Pre-owned/Stock) → "Añadir a la lista" (elige nuevos / bajadas / retirados) → "Guardar en GitHub".
+  Las alertas viven en `public/alerts.json` (varias a la vez, se pueden pausar/eliminar). Para guardar desde la web
+  hace falta un **token de GitHub** que se queda solo en tu navegador: https://github.com/settings/personal-access-tokens/new
+  → *Fine-grained*, *Only select repositories* → PolestarTracker, *Repository permissions → Contents: Read and write*.
+  Sin token: "Copiar JSON" y pegarlo con el enlace "Abrir alerts.json en GitHub". Cada guardado dispara un refresco y
+  el aviso se aplica desde entonces (España se comprueba cada 10 min).
+- Respaldo por variables de entorno si `alerts.json` no tiene alertas (Variables, no secrets; por defecto entre paréntesis): `NOTIFY_MARKETS` (`es`),
   `NOTIFY_MODELS` (`P3,P4`), `NOTIFY_SOURCES` (`preowned,stock`), `NOTIFY_VARIANTS` (todas; p.ej.
   `Dual Motor,Performance` para ignorar Single), `NOTIFY_EVENTS` (`new,drop`; añade `removed` si quieres),
   `SITE_URL` (enlace a tu web en el mensaje).

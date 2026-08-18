@@ -1,0 +1,20 @@
+{
+  "_doc": "Alertas del notificador (src/notify.js). Cada alerta filtra los cambios del último refresco y se envía por todos los canales configurados (Telegram / ntfy / email). Listas vacías = sin restricción. Se edita desde la web (🔔 Avisos) o a mano.",
+  "alerts": [
+    {
+      "id": "espana-p3-p4",
+      "name": "España · Polestar 3 y 4",
+      "enabled": true,
+      "markets": ["es"],
+      "models": ["P3", "P4"],
+      "sources": ["preowned", "stock"],
+      "variants": [],
+      "years": [],
+      "priceMaxEur": null,
+      "kmMax": null,
+      "hideSingle": false,
+      "hideCoupe": false,
+      "events": ["new", "drop"]
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-// Avisa de cambios (nuevos, bajadas de precio, retirados) del último refresco por Telegram y/o ntfy (push al móvil).
+// Avisa de cambios (nuevos, bajadas de precio, retirados) del último refresco por Telegram, ntfy (push al móvil) y/o email.
 // Se ejecuta después de `npm run refresh` (en GitHub Actions o en local). Sin dependencias.
 //
-// Configuración por variables de entorno (en GitHub: Settings → Secrets and variables → Actions):
+// QUÉ se vigila: public/alerts.json (una o varias alertas con filtros: mercados, modelos, fuentes, motorización, años,
+//   precio máx. en EUR, km máx., ocultar Single / P4 MY27, eventos new/drop/removed). Se edita desde la web (🔔 Avisos)
+//   o a mano. Si no existe el fichero (o no tiene alertas), se usa una única alerta definida por variables de entorno:
 //   NOTIFY_MARKETS   países a vigilar, códigos separados por coma          (defecto: es)
 //   NOTIFY_MODELS    modelos, cortos separados por coma                    (defecto: P3,P4)
 //   NOTIFY_SOURCES   preowned,stock                                        (defecto: preowned,stock)
@@ -25,6 +27,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const INVENTORY_JSON = join(ROOT, 'data', 'inventory.json');
+const ALERTS_JSON = join(ROOT, 'public', 'alerts.json');
 const args = new Set(process.argv.slice(2));
 const dry = args.has('--dry');
 const test = args.has('--test');
@@ -42,11 +45,37 @@ const nf = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 });
 const money = (v, cur) => (v == null ? '—' : `${nf.format(v)} ${cur === 'EUR' ? '€' : cur}`);
 const km = (v) => (v == null ? '' : `${nf.format(v)} km`);
 
-function matches(v) {
-  if (!MARKETS.includes(v.country)) return false;
-  if (!MODELS.includes(String(v.modelShort).toUpperCase())) return false;
-  if (!SOURCES.includes(v.source)) return false;
-  if (VARIANTS.length && !VARIANTS.includes(v.variant)) return false;
+/** Alertas: del fichero public/alerts.json o, si no hay, una sola construida con las variables de entorno. */
+function loadAlerts() {
+  let alerts = [];
+  if (existsSync(ALERTS_JSON)) {
+    try { alerts = (JSON.parse(readFileSync(ALERTS_JSON, 'utf8')).alerts ?? []).filter((x) => x && x.enabled !== false); }
+    catch (e) { console.error('notify: alerts.json inválido: ' + e.message); }
+  }
+  if (!alerts.length) {
+    alerts = [{ id: 'env', name: `${MARKETS.join(',').toUpperCase()} · ${MODELS.join(',')}`, markets: MARKETS, models: MODELS, sources: SOURCES, variants: VARIANTS, events: [...EVENTS] }];
+  }
+  return alerts.map((al) => ({
+    ...al,
+    markets: (al.markets ?? []).map((x) => String(x).toLowerCase()),
+    models: (al.models ?? []).map((x) => String(x).toUpperCase()),
+    sources: al.sources ?? [],
+    variants: al.variants ?? [],
+    years: (al.years ?? []).map(Number),
+    events: new Set(al.events?.length ? al.events : ['new', 'drop']),
+  }));
+}
+
+function matches(v, al) {
+  if (al.markets.length && !al.markets.includes(v.country)) return false;
+  if (al.models.length && !al.models.includes(String(v.modelShort).toUpperCase())) return false;
+  if (al.sources.length && !al.sources.includes(v.source)) return false;
+  if (al.variants.length && !al.variants.includes(v.variant)) return false;
+  if (al.years.length && !al.years.includes(Number(v.modelYear))) return false;
+  if (al.priceMaxEur != null && al.priceMaxEur !== '' && !(v.priceEur != null && v.priceEur <= Number(al.priceMaxEur))) return false;
+  if (al.kmMax != null && al.kmMax !== '' && v.source === 'preowned' && !(v.mileageKm != null && v.mileageKm <= Number(al.kmMax))) return false;
+  if (al.hideSingle && v.flags?.single) return false;
+  if (al.hideCoupe && v.flags?.coupe) return false;
   return true;
 }
 
@@ -60,19 +89,26 @@ function line(v, kind) {
   return `• ${what}: ${spec}\n  ${price}${extra ? ' · ' + extra : ''}\n  ${v.url}`;
 }
 
-function build(inv) {
+/** Secciones de una alerta (null si no hay nada que avisar). */
+function buildAlert(inv, al) {
   const g = inv.generatedAt;
-  const news = EVENTS.has('new') ? inv.vehicles.filter((v) => matches(v) && v.firstSeen === g && !!inv.previousGeneratedAt) : [];
-  const drops = EVENTS.has('drop') ? inv.vehicles.filter((v) => matches(v) && v.priceChange < 0 && v.priceChangeAt === g) : [];
-  const removed = EVENTS.has('removed') ? (inv.removed ?? []).filter((v) => matches({ ...v, modelShort: v.model?.replace('Polestar ', 'P') })) : [];
+  const news = al.events.has('new') ? inv.vehicles.filter((v) => matches(v, al) && v.firstSeen === g && !!inv.previousGeneratedAt) : [];
+  const drops = al.events.has('drop') ? inv.vehicles.filter((v) => matches(v, al) && v.priceChange < 0 && v.priceChangeAt === g) : [];
+  const removed = al.events.has('removed') ? (inv.removed ?? []).filter((v) => matches({ ...v, modelShort: String(v.model ?? '').replace('Polestar ', 'P'), flags: {} }, al)) : [];
   const parts = [];
   if (news.length) parts.push(`🆕 ${news.length} nuevo${news.length > 1 ? 's' : ''}:\n` + news.map((v) => line(v, 'new')).join('\n'));
   if (drops.length) parts.push(`📉 ${drops.length} bajada${drops.length > 1 ? 's' : ''} de precio:\n` + drops.map((v) => line(v, 'drop')).join('\n'));
   if (removed.length) parts.push(`🚫 ${removed.length} retirado${removed.length > 1 ? 's' : ''}:\n` + removed.map((v) => `• ${v.model} ${v.variant ?? ''} MY${v.modelYear ?? '?'} · ${money(v.price, v.currency)} · ${(v.country || '').toUpperCase()}`).join('\n'));
   if (!parts.length) return null;
-  const when = new Date(g).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  const scope = `${MARKETS.join(',').toUpperCase()} · ${MODELS.join(',')}`;
-  return `Polestar Tracker (${scope}) — ${when}\n\n${parts.join('\n\n')}${SITE_URL ? `\n\n${SITE_URL}` : ''}`;
+  return `🔔 ${al.name || al.id || 'Alerta'}\n${parts.join('\n\n')}`;
+}
+
+function build(inv) {
+  const alerts = loadAlerts();
+  const sections = alerts.map((al) => buildAlert(inv, al)).filter(Boolean);
+  if (!sections.length) return null;
+  const when = new Date(inv.generatedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  return `Polestar Tracker — ${when}\n\n${sections.join('\n\n')}${SITE_URL ? `\n\n${SITE_URL}` : ''}`;
 }
 
 async function sendTelegram(text) {
@@ -148,7 +184,7 @@ async function main() {
   if (!existsSync(INVENTORY_JSON)) { console.log('notify: no hay data/inventory.json'); return; }
   const inv = JSON.parse(readFileSync(INVENTORY_JSON, 'utf8'));
   let text = build(inv);
-  if (!text && test) text = `Polestar Tracker: mensaje de prueba ✅ (${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })})\nVigilando ${MARKETS.join(',').toUpperCase()} · ${MODELS.join(',')} · ${SOURCES.join(',')}${SITE_URL ? '\n' + SITE_URL : ''}`;
+  if (!text && test) text = `Polestar Tracker: mensaje de prueba ✅ (${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })})\nAlertas activas: ${loadAlerts().map((al) => al.name || al.id).join(' · ')}${SITE_URL ? '\n' + SITE_URL : ''}`;
   if (!text) { console.log('notify: sin cambios que avisar'); return; }
   console.log(text);
   if (dry) return;

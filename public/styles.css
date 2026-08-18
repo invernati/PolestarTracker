@@ -234,3 +234,28 @@ td.loc .ell { display: inline-block; max-width: 220px; overflow: hidden; text-ov
   .filters-toggle.open { border-color: var(--accent); color: var(--accent); }
   .filters:not(.open) { display: none; }
 }
+
+/* ---------- avisos ---------- */
+.btn-alerts { border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 10px; padding: 7px 12px; cursor: pointer; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow); }
+.btn-alerts:hover { border-color: var(--accent); color: var(--accent); }
+.dlg { border: 0; border-radius: 12px; padding: 0; max-width: 720px; width: calc(100% - 24px); background: var(--panel); color: var(--text); box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+.dlg::backdrop { background: rgba(0,0,0,0.35); }
+.dlg-box { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.dlg-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dlg h4 { margin: 8px 0 2px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.small { font-size: 12px; }
+.alerts-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.alerts-list li { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.alerts-list li.off { opacity: 0.5; }
+.alerts-list .al-name { font-weight: 600; }
+.alerts-list .al-desc { font-size: 12px; color: var(--muted); }
+.alerts-list .al-actions { margin-left: auto; display: flex; gap: 6px; white-space: nowrap; }
+.alert-new, .alert-save { display: flex; flex-direction: column; gap: 6px; }
+.alert-new label, .alert-save label { display: flex; gap: 8px; align-items: center; }
+.alert-new input[type=text], .alert-save input[type=password] { flex: 1; padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); color: var(--text); min-width: 0; }
+.alert-preview { font-size: 13px; background: var(--bg); border-radius: 8px; padding: 8px 10px; line-height: 1.6; }
+.alert-events { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+.alert-events label { display: inline-flex; gap: 4px; align-items: center; }
+.alert-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.alert-actions .lnk { font-size: 12px; }
+@media (max-width: 720px) { .btn-alerts { margin-top: 4px; } }

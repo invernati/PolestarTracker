@@ -23,6 +23,7 @@
       <button type="button" class="tab" data-tab="offers">Ofertas y bajadas <span class="tab-count" id="cnt-offers">–</span></button>
       <button type="button" class="tab" data-tab="recent" title="Nuevos y bajadas de precio detectados en las últimas 24 horas">Últimas 24 h <span class="tab-count" id="cnt-recent">–</span></button>
     </nav>
+    <button type="button" class="btn-alerts" id="alerts-open" title="Avisos por Telegram / ntfy / email según filtros">🔔 Avisos <span class="tab-count" id="cnt-alerts">–</span></button>
   </header>
 
   <div class="chips-row" id="market-chips"></div>
@@ -84,6 +85,40 @@
     <div id="empty" class="empty-msg hidden">Ningún vehículo cumple los filtros.</div>
     <div id="more" class="more-msg hidden"><span id="more-info"></span> <button type="button" id="more-page" class="btn-reset">Mostrar más</button> <button type="button" id="more-all" class="btn-reset">Mostrar todas</button></div>
   </div>
+
+  <dialog id="alerts-dlg" class="dlg">
+    <form method="dialog" class="dlg-box">
+      <div class="dlg-head"><b>🔔 Avisos</b> <span class="muted">Telegram · ntfy · email, tras cada refresco (España cada 10 min)</span> <button type="submit" class="btn-reset" style="margin-left:auto">Cerrar</button></div>
+      <div id="alerts-status" class="muted small"></div>
+      <h4>Alertas activas <span class="muted small" id="alerts-src"></span></h4>
+      <ul id="alerts-list" class="alerts-list"></ul>
+      <h4>Nueva alerta con los filtros actuales</h4>
+      <div class="alert-new">
+        <label>Nombre <input type="text" id="alert-name" placeholder="p.ej. España P4 Dual < 60k" /></label>
+        <div id="alert-preview" class="alert-preview"></div>
+        <div class="alert-events">Avisar de:
+          <label><input type="checkbox" id="ev-new" checked /> nuevos</label>
+          <label><input type="checkbox" id="ev-drop" checked /> bajadas de precio</label>
+          <label><input type="checkbox" id="ev-removed" /> retirados</label>
+        </div>
+        <div class="alert-actions">
+          <button type="button" class="btn-refresh" id="alert-add">＋ Añadir a la lista</button>
+        </div>
+      </div>
+      <h4>Guardar cambios</h4>
+      <div class="alert-save">
+        <div class="muted small">Las alertas viven en <code>public/alerts.json</code> del repositorio. Opción 1: guardar directamente con un token de GitHub (se guarda solo en este navegador). Opción 2: copiar el JSON y pegarlo en el editor de GitHub.</div>
+        <label>Token de GitHub <input type="password" id="gh-token" placeholder="github_pat_… (fine-grained, solo este repo, Contents: Read and write)" autocomplete="off" /></label>
+        <div class="alert-actions">
+          <button type="button" class="btn-refresh" id="alerts-save">Guardar en GitHub</button>
+          <button type="button" class="btn-reset" id="alerts-copy">Copiar JSON</button>
+          <a class="lnk" id="alerts-edit-link" href="#" target="_blank" rel="noopener">Abrir alerts.json en GitHub ↗</a>
+          <a class="lnk" id="gh-token-link" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear token ↗</a>
+        </div>
+        <div class="muted small">Los canales (bot de Telegram, tema ntfy, SMTP) se configuran una vez en <a class="lnk" id="secrets-link" href="#" target="_blank" rel="noopener">Settings → Secrets del repo ↗</a>; ver README.</div>
+      </div>
+    </form>
+  </dialog>
 
   <footer class="foot">
     <span>Fuentes: APIs públicas de Polestar (<code>pc-api.polestar.com</code>): inventario Pre-owned y coches nuevos en stock ("listos para entrega"). Precios en EUR convertidos con tipos fijos (ver <code>src/config.js</code>) solo para ordenar.</span>

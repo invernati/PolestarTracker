@@ -692,6 +692,133 @@
     });
   }
 
+
+  // ---------- 🔔 Avisos: alertas guardadas en public/alerts.json (las lee src/notify.js tras cada refresco) ----------
+  const REPO = (() => {
+    const h = location.hostname;
+    if (h.endsWith('.github.io')) { const seg = location.pathname.split('/').filter(Boolean)[0]; if (seg) return h.split('.')[0] + '/' + seg; }
+    return 'invernati/PolestarTracker';
+  })();
+  const ALERTS_PATH = 'public/alerts.json';
+  const alertsState = { doc: null, sha: null, dirty: false, source: '' };
+  const TOKEN_KEY = 'polestar-gh-token';
+
+  async function loadAlerts() {
+    alertsState.sha = null;
+    // Preferimos la versión del repo (con sha, necesaria para guardar); si no hay token, la copia publicada.
+    const token = localStorage.getItem(TOKEN_KEY) || '';
+    if (token) {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${ALERTS_PATH}?ref=main`, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); alertsState.sha = j.sha; alertsState.doc = JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, ''))))); alertsState.source = 'repositorio (main)'; alertsState.dirty = false; return; }
+        if (r.status === 401 || r.status === 403) $('#alerts-status').textContent = 'El token no es válido o no tiene permiso Contents en ' + REPO + ' (se muestra la copia publicada).';
+      } catch { /* sin red / CORS: seguimos con la copia publicada */ }
+    }
+    try {
+      const r = await fetch('alerts.json', { cache: 'no-store' });
+      if (r.ok) { alertsState.doc = await r.json(); alertsState.source = 'web publicada'; alertsState.dirty = false; return; }
+    } catch { /* file:// */ }
+    alertsState.doc = { alerts: [] }; alertsState.source = 'nuevo';
+  }
+
+  const alertDesc = (al) => {
+    const p = [];
+    p.push(al.markets?.length ? al.markets.map((c) => c.toUpperCase()).join(', ') : 'todos los países');
+    p.push(al.models?.length ? al.models.join(', ') : 'todos los modelos');
+    if (al.sources?.length && al.sources.length < 2) p.push(al.sources[0] === 'stock' ? 'solo stock' : 'solo pre-owned');
+    if (al.variants?.length) p.push(al.variants.join(' / '));
+    if (al.years?.length) p.push('MY ' + al.years.join(','));
+    if (al.priceMaxEur) p.push('≤ ' + fmtMoney(al.priceMaxEur, 'EUR'));
+    if (al.kmMax) p.push('≤ ' + nf0.format(al.kmMax) + ' km');
+    if (al.hideSingle) p.push('sin Single');
+    if (al.hideCoupe) p.push('sin P4 MY27');
+    const ev = (al.events?.length ? al.events : ['new', 'drop']).map((e) => ({ new: 'nuevos', drop: 'bajadas', removed: 'retirados' }[e] || e)).join(' + ');
+    return p.join(' · ') + ' — avisa de ' + ev;
+  };
+
+  function alertFromFilters() {
+    const f = F();
+    const allM = Object.keys(DATA.markets), allMo = [...new Set(all.map((v) => v.modelShort))], allV = [...new Set(all.map((v) => v.variant))], allY = [...new Set(all.map((v) => String(v.modelYear)))];
+    const pick = (sel, universe) => (sel && sel.length < universe.length ? sel : []);
+    return {
+      id: 'a' + Date.now().toString(36),
+      name: $('#alert-name').value.trim(),
+      enabled: true,
+      markets: pick(f.countries, allM),
+      models: pick(f.models, allMo),
+      sources: tab === 'preowned' || tab === 'stock' ? [tab] : [],
+      variants: pick(f.variants, allV),
+      years: pick(f.years, allY).map(Number),
+      priceMaxEur: f.priceMax ? Number(f.priceMax) : null,
+      kmMax: f.kmMax ? Number(f.kmMax) : null,
+      hideSingle: !!f.hideSingle,
+      hideCoupe: !!f.hideCoupe,
+      events: [$('#ev-new').checked && 'new', $('#ev-drop').checked && 'drop', $('#ev-removed').checked && 'removed'].filter(Boolean),
+    };
+  }
+
+  function renderAlerts() {
+    const list = alertsState.doc?.alerts ?? [];
+    $('#cnt-alerts').textContent = list.filter((a) => a.enabled !== false).length;
+    $('#alerts-src').textContent = alertsState.source ? '(' + alertsState.source + (alertsState.dirty ? ', cambios sin guardar' : '') + ')' : '';
+    $('#alerts-list').innerHTML = list.length ? list.map((al, i) => `<li class="${al.enabled === false ? 'off' : ''}"><div><div class="al-name">${esc(al.name || al.id || 'Alerta')}</div><div class="al-desc">${esc(alertDesc(al))}</div></div><div class="al-actions"><button type="button" class="btn-reset" data-al-toggle="${i}">${al.enabled === false ? 'Activar' : 'Pausar'}</button><button type="button" class="btn-reset" data-al-del="${i}">Eliminar</button></div></li>`).join('') : '<li class="muted">Ninguna. Ajusta los filtros de la web y pulsa "Añadir a la lista".</li>';
+    const draft = alertFromFilters();
+    $('#alert-preview').textContent = alertDesc(draft);
+    if (!$('#alert-name').value) $('#alert-name').placeholder = draft.markets.map((c) => c.toUpperCase()).join(',') || 'Todos';
+    $('#alerts-edit-link').href = `https://github.com/${REPO}/edit/main/${ALERTS_PATH}`;
+    $('#secrets-link').href = `https://github.com/${REPO}/settings/secrets/actions`;
+  }
+
+  async function saveAlerts() {
+    const token = $('#gh-token').value.trim();
+    const st = $('#alerts-status');
+    if (!token) { st.textContent = 'Pon un token de GitHub (o usa "Copiar JSON" y pégalo en el editor de GitHub).'; return; }
+    localStorage.setItem(TOKEN_KEY, token);
+    st.textContent = 'Guardando…';
+    try {
+      const headers = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
+      if (!alertsState.sha) {
+        const r0 = await fetch(`https://api.github.com/repos/${REPO}/contents/${ALERTS_PATH}?ref=main`, { headers, cache: 'no-store' });
+        if (r0.ok) alertsState.sha = (await r0.json()).sha;
+      }
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(alertsState.doc, null, 2) + '\n')));
+      const body = { message: 'alerts: actualizado desde la web', content, branch: 'main' };
+      if (alertsState.sha) body.sha = alertsState.sha;
+      const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${ALERTS_PATH}`, { method: 'PUT', headers, body: JSON.stringify(body) });
+      if (!r.ok) throw new Error('GitHub ' + r.status + ': ' + ((await r.json()).message || ''));
+      const j = await r.json(); alertsState.sha = j.content.sha; alertsState.dirty = false; alertsState.source = 'repositorio (main)';
+      st.textContent = 'Guardado en GitHub ✓ — se aplica en el próximo refresco (España cada 10 min). La web publicada mostrará la lista nueva en unos minutos.';
+      renderAlerts();
+    } catch (e) { st.textContent = 'No se pudo guardar: ' + e.message + '. Alternativa: "Copiar JSON" y pegar en el editor de GitHub.'; }
+  }
+
+  function bindAlerts() {
+    const dlg = $('#alerts-dlg');
+    $('#gh-token').value = localStorage.getItem(TOKEN_KEY) || '';
+    $('#alerts-open').addEventListener('click', async () => { $('#alerts-status').textContent = ''; await loadAlerts(); renderAlerts(); dlg.showModal(); });
+    ['#alert-name', '#ev-new', '#ev-drop', '#ev-removed'].forEach((sel) => $(sel).addEventListener('input', renderAlerts));
+    $('#alert-add').addEventListener('click', () => {
+      const al = alertFromFilters();
+      if (!al.name) al.name = alertDesc(al).split(' — ')[0];
+      if (!al.events.length) { $('#alerts-status').textContent = 'Marca al menos un tipo de aviso.'; return; }
+      alertsState.doc.alerts = alertsState.doc.alerts || []; alertsState.doc.alerts.push(al); alertsState.dirty = true;
+      $('#alert-name').value = ''; $('#alerts-status').textContent = 'Añadida. Pulsa "Guardar en GitHub" (o copia el JSON) para que tenga efecto.'; renderAlerts();
+    });
+    $('#alerts-list').addEventListener('click', (e) => {
+      const del = e.target.closest('[data-al-del]'), tog = e.target.closest('[data-al-toggle]');
+      if (del) { alertsState.doc.alerts.splice(Number(del.dataset.alDel), 1); alertsState.dirty = true; renderAlerts(); }
+      if (tog) { const al = alertsState.doc.alerts[Number(tog.dataset.alToggle)]; al.enabled = al.enabled === false; alertsState.dirty = true; renderAlerts(); }
+    });
+    $('#alerts-save').addEventListener('click', saveAlerts);
+    $('#alerts-copy').addEventListener('click', async () => {
+      const txt = JSON.stringify(alertsState.doc, null, 2);
+      try { await navigator.clipboard.writeText(txt); $('#alerts-status').textContent = 'JSON copiado. Pégalo en alerts.json (enlace "Abrir alerts.json en GitHub") y guarda el commit.'; }
+      catch { $('#alerts-status').textContent = 'No se pudo copiar automáticamente; el JSON es: ' + txt; }
+    });
+    // Contador del botón sin abrir el diálogo.
+    loadAlerts().then(() => { $('#cnt-alerts').textContent = (alertsState.doc?.alerts ?? []).filter((a) => a.enabled !== false).length; });
+  }
+
   // ---------- init ----------
   loadData().then((data) => {
     if (!data) {
@@ -713,5 +840,6 @@
     bind();
     switchTab(state.tab && COLUMNS[state.tab] ? state.tab : 'preowned');
     initRefreshButton();
+    bindAlerts();
   });
 })();
