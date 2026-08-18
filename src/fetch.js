@@ -124,7 +124,7 @@ function writeSales(tracking, nowIso) {
   for (const [id, t] of Object.entries(tracking.vehicles)) {
     if (!t.removedAt || !configured.has(t.country)) continue;
     const bf = backfill.get(id) ?? {};
-    const m = t.meta ?? (bf.id ? { variant: bf.variant, modelYear: bf.modelYear, mileageKm: bf.mileageKm, priceEur: bf.priceEur, price: bf.price, currency: bf.currency } : {});
+    const m = t.meta ?? (bf.id ? { variant: bf.variant, modelYear: bf.modelYear, mileageKm: bf.mileageKm, priceEur: bf.priceEur, price: bf.price, currency: bf.currency, packs: bf.packs ?? [], bundles: bf.bundles ?? [] } : {});
     const days = Math.max(0, Math.round((Date.parse(t.removedAt) - Date.parse(t.firstSeen)) / 86400000));
     sales.push({
       id, source: t.source, country: t.country, countryName: m.countryName ?? names[t.country] ?? t.country,
@@ -134,6 +134,7 @@ function writeSales(tracking, nowIso) {
       priceEur: m.priceEur ?? ((m.currency ?? t.priceHistory?.[t.priceHistory.length - 1]?.currency ?? 'EUR') === 'EUR' ? (m.price ?? t.priceHistory?.[t.priceHistory.length - 1]?.price ?? null) : null),
       listPrice: m.listPrice ?? null, discount: m.discount ?? 0, firstSeen: t.firstSeen, removedAt: t.removedAt, daysListed: days,
       priceHistory: t.priceHistory ?? [], url: m.url ?? null, image: m.image ?? null,
+      packs: m.packs ?? [], bundles: m.bundles ?? [], interior: m.interior ?? null,
       flags: { single: !!m.single, coupe: !!m.coupe },
       vin: t.vin ?? bf.vin ?? null,
       // Sin metadatos ni snapshot (retirado antes de que se guardaran): la web lo mostrará con menos detalle.
@@ -291,7 +292,7 @@ async function main() {
     t.source = v.source;
     t.vin = v.vin;
     // Metadatos para el histórico de ventas (public/data/sales.json): se actualizan mientras el coche está a la venta.
-    t.meta = { model: v.model, variant: v.variant, modelYear: v.modelYear, mileageKm: v.mileageKm, color: v.color, price: v.price, currency: v.currency, priceEur: v.priceEur, url: v.url, image: v.imageStudio, countryName: v.countryName, listPrice: v.listPrice ?? null, discount: v.discount || 0, single: !!v.flags?.single, coupe: !!v.flags?.coupe };
+    t.meta = { model: v.model, variant: v.variant, modelYear: v.modelYear, mileageKm: v.mileageKm, color: v.color, price: v.price, currency: v.currency, priceEur: v.priceEur, url: v.url, image: v.imageStudio, countryName: v.countryName, listPrice: v.listPrice ?? null, discount: v.discount || 0, single: !!v.flags?.single, coupe: !!v.flags?.coupe, packs: v.packs ?? [], bundles: v.bundles ?? [], interior: v.interior ?? null };
     const last = t.priceHistory[t.priceHistory.length - 1];
     if (!last || last.price !== v.price || last.currency !== v.currency) {
       t.priceHistory.push({ t: nowIso, price: v.price, currency: v.currency });
@@ -377,7 +378,7 @@ async function main() {
     vehicles: unique.map((v) => ({
       id: v.id, source: v.source, country: v.country, model: v.modelShort, variant: v.variant, modelYear: v.modelYear,
       price: v.price, currency: v.currency, priceEur: v.priceEur, listPrice: v.listPrice ?? undefined, discount: v.discount || undefined,
-      mileageKm: v.mileageKm, vin: v.vin ?? undefined, firstSeen: v.firstSeen,
+      mileageKm: v.mileageKm, vin: v.vin ?? undefined, firstSeen: v.firstSeen, packs: v.packs?.length ? v.packs : undefined, bundles: v.bundles?.length ? v.bundles : undefined,
     })),
   };
   if (historyMode !== 'none') writeFileSync(join(HISTORY_DIR, `${stamp(startedAt)}.json`), JSON.stringify(snapshot), 'utf8');

@@ -66,9 +66,9 @@
   function decorateSale(x) {
     return {
       ...x,
-      packs: [], bundles: [], options: [], packsStr: '', priceChange: 0, isOffer: false, isNew: false, isDrop: false, isRecent: false,
+      packs: x.packs || [], bundles: x.bundles || [], options: [], packsStr: (x.packs || []).concat(x.bundles || []).join(', '), priceChange: 0, isOffer: false, isNew: false, isDrop: false, isRecent: false,
       flags: x.flags || {}, removedTs: Date.parse(x.removedAt) || 0,
-      _search: [x.model, x.variant, x.color, x.countryName, x.country, x.vin, x.modelYear, x.source].join(' ').toLowerCase(),
+      _search: [x.model, x.variant, x.color, x.countryName, x.country, x.vin, x.modelYear, x.source, (x.packs || []).join(' '), (x.bundles || []).join(' '), x.interior].join(' ').toLowerCase(),
     };
   }
 
@@ -368,6 +368,7 @@
     { key: 'mileageKm', label: 'Km', cls: 'num', render: (v) => v.source === 'stock' ? '<span class="muted">nuevo</span>' : (v.mileageKm != null ? nf0.format(v.mileageKm) : '—') },
     { key: 'price', label: 'Último precio', cls: 'num price', render: (v) => fmtMoney(v.price, v.currency) + (v.priceHistory && v.priceHistory.length > 1 ? `<span class="sub">inicial ${fmtMoney(v.priceHistory[0].price, v.currency)}</span>` : '') },
     { key: 'color', label: 'Color', render: (v) => esc(v.color || '—') },
+    { key: 'packsStr', label: 'Packs', render: (v) => (v.packs.length || v.bundles.length) ? packsCell(v) : '<span class="muted">—</span>' },
     { key: 'daysListed', label: 'Días en venta', cls: 'num', title: 'Días entre la primera vez que el tracker lo vio y su retirada', render: (v) => v.daysListed ?? '—' },
     { key: 'countryName', label: 'País', render: countryCell },
     { key: null, label: '', render: (v) => v.url ? `<a class="lnk" href="${esc(v.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="La ficha puede ya no existir">Ficha ↗</a>` : '' },
