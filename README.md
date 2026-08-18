@@ -109,27 +109,29 @@ Register-ScheduledTask -TaskName "Polestar Tracker refresh" -Action $action -Tri
 
 ## ¿Cada cuánto se actualiza y quién lo hace?
 
-Los datos cambian cuando se ejecuta `npm run refresh`. Formas de hacerlo:
-- **GitHub Actions** (la buena para tener el PC apagado): el workflow `.github/workflows/refresh-and-deploy.yml`
-  refresca a las **08:00, 13:00, 18:00 y 22:00** (hora España, verano) y publica la web en GitHub Pages. También se
-  puede lanzar a mano desde Actions → *Run workflow* (incluida la app móvil de GitHub).
-- Los botones de la cabecera de la web, **solo cuando la web la sirve `npm run serve` en tu PC** (en GitHub Pages no
-  aparecen: una web estática no puede lanzar el fetcher):
-  - **↻ Actualizar lo que veo**: solo los países y modelos marcados y la fuente de la pestaña actual (Pre-owned o
-    Stock; en Ofertas / Últimas 24 h ambas). España + P3/P4 pre-owned ≈ 4 s; con stock ≈ 15 s. El resto se conserva y
-    la cabecera indica "parcial: ES · P3, P4 · pre-owned".
-  - **↻ Todo**: refresco completo (≈4-5 min). La página se recarga sola al terminar.
-- La tarea programada de Windows (desactivada, ver arriba).
-La web muestra en la cabecera la fecha/hora y el alcance del último refresco.
+Los datos cambian cuando se ejecuta `npm run refresh`. En producción lo hacen **dos workflows de GitHub Actions**
+(tu PC puede estar apagado; ambos avisan por Telegram/ntfy/email y republican la web):
 
-**¿Refresco cada hora?** Técnicamente sí:
-- En **tu PC** (tarea programada cada hora): sin problema, ≈100 requests por refresco con pausas de cortesía.
-- En **GitHub Actions**: viable en un repositorio **público** (minutos ilimitados). En uno **privado** no cabe:
-  24 refrescos × ~5 min ≈ 3600 min/mes > 2000 gratis (≈ 13 €/mes extra). Ten en cuenta que el cron de GitHub
-  no es puntual (retrasos de 5-30 min en horas punta y a veces se salta una ejecución) y que el commit de datos
-  en cada refresco hace crecer el repo: usa `--history=daily` (un snapshot al día en vez de uno por hora).
-  Compromiso razonable: cada 2-3 h de día (`cron: '15 6-22/2 * * *'`) → ~9 refrescos/día, ~1350 min/mes,
-  cabe incluso en un repo privado.
+| Workflow | Alcance | Frecuencia (hora España, verano) | Coste por run |
+|---|---|---|---|
+| `refresh-and-deploy.yml` **General** | 7 mercados × 4 modelos × 2 fuentes | **cada hora**, en el minuto 05, de 07:05 a 00:05 (cron `5 5-22 * * *` UTC) | ~102 requests, 6-8 min |
+| `refresh-es.yml` **España rápido** | solo ES (pre-owned + stock, todos los modelos) | **cada 10 min** de 07:00 a 00:50 (cron `*/10 5-22 * * *` UTC) | ~15 requests, 1-2 min |
+
+Comparten cola (`concurrency: refresh-deploy`): nunca se solapan; si el general está corriendo, el de España espera,
+y si se acumulan runs en cola solo se conserva el más reciente. Al día: ~18 generales + ~100 de España ≈ **3.300 requests
+a Polestar y ~330 min de Actions** (gratis en repo público). En invierno (CET) los crons quedan una hora antes en hora
+local; para mantener 07-00 cambia `5-22` por `6-23` en ambos ficheros. GitHub no admite crons de menos de 5 min y en
+horas punta los retrasa; 10 min es el mínimo práctico.
+
+La cabecera de la web muestra **"Actualizado: general hh:mm · España hh:mm"** (último refresco completo y último de
+España) y el alcance del último run. En la web publicada no hay botón de refresco (es estática); sí puedes lanzar un
+run a mano desde Actions → *Run workflow* (app móvil incluida). Los botones **↻ Actualizar lo que veo / ↻ Todo**
+aparecen solo cuando la web la sirve `npm run serve` en tu PC (España + P3/P4 pre-owned ≈ 4 s; todo ≈ 4-5 min).
+
+**¿Más frecuencia?** En repo público los minutos de Actions son ilimitados, así que el freno real es la cortesía con
+la API de Polestar y la puntualidad del cron. Si algún día pasas el repo a privado (con GitHub Student tienes 3.000
+min/mes), la configuración actual (~330 min/día ≈ 10.000 min/mes) NO cabría: vuelve a 4-8 generales/día y España
+cada 30 min, o déjalo público.
 
 ## Publicarla en internet con dominio propio (opciones de menos a más esfuerzo)
 
@@ -163,13 +165,16 @@ solo hay que configurar el canal en Settings → *Secrets and variables* → *Ac
 - **ntfy** (más simple, sin bot): instala la app *ntfy* (Android/iOS), suscríbete a un tema difícil de adivinar
   (p.ej. `polestar-guille-8f3k2`) y crea el secret `NTFY_TOPIC` con ese nombre. Opcional `NTFY_EMAIL` para recibir
   también un correo (ntfy.sh limita los correos por día).
+- **Email (SMTP, sin dependencias)**: secrets `SMTP_USER` (tu correo), `SMTP_PASS` y `MAIL_TO` (destinatario, puede ser
+  el mismo). Por defecto usa Gmail (`smtp.gmail.com:465`): activa la verificación en 2 pasos y crea una **contraseña
+  de aplicación** en https://myaccount.google.com/apppasswords (16 letras) → esa es `SMTP_PASS`. Otros proveedores:
+  `SMTP_HOST`, `SMTP_PORT` (465, TLS implícito) y `MAIL_FROM`.
 - Qué se vigila (Variables, no secrets; valores por defecto entre paréntesis): `NOTIFY_MARKETS` (`es`),
   `NOTIFY_MODELS` (`P3,P4`), `NOTIFY_SOURCES` (`preowned,stock`), `NOTIFY_VARIANTS` (todas; p.ej.
   `Dual Motor,Performance` para ignorar Single), `NOTIFY_EVENTS` (`new,drop`; añade `removed` si quieres),
   `SITE_URL` (enlace a tu web en el mensaje).
-- Prueba en local: `TELEGRAM_BOT_TOKEN=… TELEGRAM_CHAT_ID=… npm run notify:test` (o `NTFY_TOPIC=…`).
-- Email "de verdad" (SMTP) no está incluido a propósito (necesita credenciales de un servidor de correo); ntfy con
-  `NTFY_EMAIL` o un bot de Telegram cubren el aviso al móvil sin nada más.
+- Prueba en local: `TELEGRAM_BOT_TOKEN=… TELEGRAM_CHAT_ID=… npm run notify:test` (o `NTFY_TOPIC=…`, o `SMTP_USER=… SMTP_PASS=… MAIL_TO=…`).
+- Los tres canales pueden convivir (se envía por todos los que estén configurados).
 
 Coste total: 0 € (+ dominio opcional). Alternativas equivalentes: Cloudflare Pages o Netlify (arrastrar `public/`),
 pero sin el refresco automático que aquí hace Actions.
