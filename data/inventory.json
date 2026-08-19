@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-08-19T17:41:44.485Z",
- "durationSec": 41,
+ "generatedAt": "2026-08-19T17:59:15.433Z",
+ "durationSec": 38,
  "requestCount": 17,
  "fxToEur": {
   "EUR": 1,
@@ -68,7 +68,7 @@
     "stock:824": 41
    },
    "errors": [],
-   "fetchedAt": "2026-08-19T17:42:25.235Z"
+   "fetchedAt": "2026-08-19T17:59:53.318Z"
   },
   "fr": {
    "code": "fr",
@@ -265,7 +265,7 @@
  "refreshes": {
   "full": "2026-08-19T17:36:01.361Z",
   "markets": {
-   "es": "2026-08-19T17:41:44.485Z",
+   "es": "2026-08-19T17:59:15.433Z",
    "fr": "2026-08-19T17:36:01.361Z",
    "nl": "2026-08-19T17:36:01.361Z",
    "be": "2026-08-19T17:36:01.361Z",
@@ -274,7 +274,7 @@
    "pt": "2026-08-19T17:36:01.361Z"
   }
  },
- "previousGeneratedAt": "2026-08-19T17:36:01.361Z",
+ "previousGeneratedAt": "2026-08-19T17:41:44.485Z",
  "scope": {
   "markets": [
    "es"
@@ -3584,108 +3584,6 @@
   },
   {
    "source": "stock",
-   "id": "stock:es:534FEPQ0L11974700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
-   "vin": null,
-   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11974700RM8000%20%20%20%20%20%2000000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
-   "model": "Polestar 2",
-   "modelShort": "P2",
-   "modelCode": "534",
-   "displayName": "Polestar 2",
-   "modelYear": 2027,
-   "variant": "Single Motor",
-   "motorCode": "FE",
-   "motorLabel": "Long range Single motor",
-   "firstRegistration": null,
-   "delivery": "Principios de septiembre",
-   "deliveryDate": "2026-09-02T09:23:48.907Z",
-   "mileageKm": 0,
-   "mileageRaw": 0,
-   "mileageUnit": "km",
-   "price": 50500,
-   "listPrice": 56950,
-   "discount": 6450,
-   "discountPct": 11.3,
-   "currency": "EUR",
-   "priceEur": 50500,
-   "listPriceEur": 56950,
-   "vatDeductible": null,
-   "color": "Storm",
-   "colorCode": "74700",
-   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
-   "wheels": "19\" Aero",
-   "packs": [
-    "Plus",
-    "Pilot",
-    "Climate"
-   ],
-   "bundles": [
-    "Prime Pack"
-   ],
-   "packDetails": [
-    {
-     "name": "Plus",
-     "code": "XPLUSS",
-     "label": "Plus"
-    },
-    {
-     "name": "Pilot",
-     "code": "XPILOT",
-     "label": "Pilot"
-    },
-    {
-     "name": "Climate",
-     "code": "XCLIMT",
-     "label": "Climate"
-    }
-   ],
-   "options": [
-    "Cable de carga CA para estación de carga pública/doméstica",
-    "Cristales tintados ventanillas traseras",
-    "Compatible con la instalación de la bola de remolque"
-   ],
-   "drivetrain": "Tracción trasera",
-   "rangeKm": "644",
-   "power": "220 kW / 299 CV",
-   "acceleration": "6,2 segundos",
-   "location": null,
-   "locationCity": null,
-   "partner": null,
-   "country": "es",
-   "countryName": "España",
-   "countryFlag": "🇪🇸",
-   "marketSlug": "es",
-   "eu": true,
-   "rhd": false,
-   "flags": {
-    "coupe": false,
-    "single": true,
-    "nonEu": false,
-    "rhd": false,
-    "campaign": true
-   },
-   "cycleState": "New",
-   "versionTimestamp": null,
-   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FE/74700/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
-   "imagePhoto": null,
-   "pno34": "534FEPQ0L11974700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
-   "structureWeek": "202617",
-   "firstSeen": "2026-08-17T17:08:10.809Z",
-   "relistedAt": null,
-   "daysListed": 2,
-   "priceHistory": [
-    {
-     "t": "2026-08-17T17:08:10.809Z",
-     "price": 50500,
-     "currency": "EUR"
-    }
-   ],
-   "priceChange": 0,
-   "priceChangeAt": null,
-   "priceChangeSinceFirst": 0,
-   "priceMax": 50500
-  },
-  {
-   "source": "stock",
    "id": "stock:es:534FEPQ0L11971700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
    "vin": null,
    "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11971700RM8000%20%20%20%20%20%2000000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
@@ -3770,6 +3668,108 @@
    "imageStudio": "https://car-images.polestar.com/534/2027/summary/FE/71700/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
    "imagePhoto": null,
    "pno34": "534FEPQ0L11971700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
+   "structureWeek": "202617",
+   "firstSeen": "2026-08-17T17:08:10.809Z",
+   "relistedAt": null,
+   "daysListed": 2,
+   "priceHistory": [
+    {
+     "t": "2026-08-17T17:08:10.809Z",
+     "price": 50500,
+     "currency": "EUR"
+    }
+   ],
+   "priceChange": 0,
+   "priceChangeAt": null,
+   "priceChangeSinceFirst": 0,
+   "priceMax": 50500
+  },
+  {
+   "source": "stock",
+   "id": "stock:es:534FEPQ0L11974700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
+   "vin": null,
+   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11974700RM8000%20%20%20%20%20%2000000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
+   "model": "Polestar 2",
+   "modelShort": "P2",
+   "modelCode": "534",
+   "displayName": "Polestar 2",
+   "modelYear": 2027,
+   "variant": "Single Motor",
+   "motorCode": "FE",
+   "motorLabel": "Long range Single motor",
+   "firstRegistration": null,
+   "delivery": "Principios de septiembre",
+   "deliveryDate": "2026-09-02T09:23:48.907Z",
+   "mileageKm": 0,
+   "mileageRaw": 0,
+   "mileageUnit": "km",
+   "price": 50500,
+   "listPrice": 56950,
+   "discount": 6450,
+   "discountPct": 11.3,
+   "currency": "EUR",
+   "priceEur": 50500,
+   "listPriceEur": 56950,
+   "vatDeductible": null,
+   "color": "Storm",
+   "colorCode": "74700",
+   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
+   "wheels": "19\" Aero",
+   "packs": [
+    "Plus",
+    "Pilot",
+    "Climate"
+   ],
+   "bundles": [
+    "Prime Pack"
+   ],
+   "packDetails": [
+    {
+     "name": "Plus",
+     "code": "XPLUSS",
+     "label": "Plus"
+    },
+    {
+     "name": "Pilot",
+     "code": "XPILOT",
+     "label": "Pilot"
+    },
+    {
+     "name": "Climate",
+     "code": "XCLIMT",
+     "label": "Climate"
+    }
+   ],
+   "options": [
+    "Cable de carga CA para estación de carga pública/doméstica",
+    "Cristales tintados ventanillas traseras",
+    "Compatible con la instalación de la bola de remolque"
+   ],
+   "drivetrain": "Tracción trasera",
+   "rangeKm": "644",
+   "power": "220 kW / 299 CV",
+   "acceleration": "6,2 segundos",
+   "location": null,
+   "locationCity": null,
+   "partner": null,
+   "country": "es",
+   "countryName": "España",
+   "countryFlag": "🇪🇸",
+   "marketSlug": "es",
+   "eu": true,
+   "rhd": false,
+   "flags": {
+    "coupe": false,
+    "single": true,
+    "nonEu": false,
+    "rhd": false,
+    "campaign": true
+   },
+   "cycleState": "New",
+   "versionTimestamp": null,
+   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FE/74700/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
+   "imagePhoto": null,
+   "pno34": "534FEPQ0L11974700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
    "structureWeek": "202617",
    "firstSeen": "2026-08-17T17:08:10.809Z",
    "relistedAt": null,
@@ -5232,110 +5232,6 @@
   },
   {
    "source": "stock",
-   "id": "stock:es:534FEPQ0L11970700RC8300      00000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
-   "vin": null,
-   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11970700RC8300%20%20%20%20%20%2000000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
-   "model": "Polestar 2",
-   "modelShort": "P2",
-   "modelCode": "534",
-   "displayName": "Polestar 2",
-   "modelYear": 2027,
-   "variant": "Single Motor",
-   "motorCode": "FE",
-   "motorLabel": "Long range Single motor",
-   "firstRegistration": null,
-   "delivery": "Finales de septiembre",
-   "deliveryDate": "2026-09-22T02:44:46.696Z",
-   "mileageKm": 0,
-   "mileageRaw": 0,
-   "mileageUnit": "km",
-   "price": 55710,
-   "listPrice": 60950,
-   "discount": 5240,
-   "discountPct": 8.6,
-   "currency": "EUR",
-   "priceEur": 55710,
-   "listPriceEur": 60950,
-   "vatDeductible": null,
-   "color": "Snow",
-   "colorCode": "70700",
-   "interior": "Cuero de Bridge of Weir en Charcoal con inserciones en madera Light Ash",
-   "wheels": "19\" Aero",
-   "packs": [
-    "Plus",
-    "Pilot",
-    "Climate",
-    "Nappa"
-   ],
-   "bundles": [
-    "Prime Pack"
-   ],
-   "packDetails": [
-    {
-     "name": "Plus",
-     "code": "XPLUSS",
-     "label": "Plus"
-    },
-    {
-     "name": "Pilot",
-     "code": "XPILOT",
-     "label": "Pilot"
-    },
-    {
-     "name": "Climate",
-     "code": "XCLIMT",
-     "label": "Climate"
-    }
-   ],
-   "options": [
-    "Cable de carga CA para estación de carga pública/doméstica",
-    "Faros Pixel LED adaptativos",
-    "Cristales tintados ventanillas traseras",
-    "Compatible con la instalación de la bola de remolque"
-   ],
-   "drivetrain": "Tracción trasera",
-   "rangeKm": "643",
-   "power": "220 kW / 299 CV",
-   "acceleration": "6,2 segundos",
-   "location": null,
-   "locationCity": null,
-   "partner": null,
-   "country": "es",
-   "countryName": "España",
-   "countryFlag": "🇪🇸",
-   "marketSlug": "es",
-   "eu": true,
-   "rhd": false,
-   "flags": {
-    "coupe": false,
-    "single": true,
-    "nonEu": false,
-    "rhd": false,
-    "campaign": true
-   },
-   "cycleState": "New",
-   "versionTimestamp": null,
-   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FE/70700/001170/RC8300/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
-   "imagePhoto": null,
-   "pno34": "534FEPQ0L11970700RC8300      00000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
-   "structureWeek": "202617",
-   "firstSeen": "2026-08-17T17:08:10.809Z",
-   "relistedAt": null,
-   "daysListed": 2,
-   "priceHistory": [
-    {
-     "t": "2026-08-17T17:08:10.809Z",
-     "price": 55710,
-     "currency": "EUR"
-    }
-   ],
-   "priceChange": 0,
-   "priceChangeAt": null,
-   "priceChangeSinceFirst": 0,
-   "priceMax": 55710
-  },
-  {
-   "source": "stock",
    "id": "stock:es:534FEPQ0L11974700RC8300      00000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
    "vin": null,
    "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11974700RC8300%20%20%20%20%20%2000000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
@@ -5440,39 +5336,40 @@
   },
   {
    "source": "stock",
-   "id": "stock:es:534FDPQ0E11972300RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
+   "id": "stock:es:534FEPQ0L11970700RC8300      00000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
    "vin": null,
-   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FDPQ0E11972300RM8000%20%20%20%20%20%2000000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
+   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FEPQ0L11970700RC8300%20%20%20%20%20%2000000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
    "model": "Polestar 2",
    "modelShort": "P2",
    "modelCode": "534",
    "displayName": "Polestar 2",
    "modelYear": 2027,
-   "variant": "Dual Motor",
-   "motorCode": "FD",
-   "motorLabel": "Long range Dual motor",
+   "variant": "Single Motor",
+   "motorCode": "FE",
+   "motorLabel": "Long range Single motor",
    "firstRegistration": null,
    "delivery": "Finales de septiembre",
-   "deliveryDate": "2026-09-22T02:44:17.384Z",
+   "deliveryDate": "2026-09-22T02:44:46.696Z",
    "mileageKm": 0,
    "mileageRaw": 0,
    "mileageUnit": "km",
    "price": 55710,
-   "listPrice": 60750,
-   "discount": 5040,
-   "discountPct": 8.3,
+   "listPrice": 60950,
+   "discount": 5240,
+   "discountPct": 8.6,
    "currency": "EUR",
    "priceEur": 55710,
-   "listPriceEur": 60750,
+   "listPriceEur": 60950,
    "vatDeductible": null,
-   "color": "Midnight",
-   "colorCode": "72300",
-   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
+   "color": "Snow",
+   "colorCode": "70700",
+   "interior": "Cuero de Bridge of Weir en Charcoal con inserciones en madera Light Ash",
    "wheels": "19\" Aero",
    "packs": [
     "Plus",
     "Pilot",
-    "Climate"
+    "Climate",
+    "Nappa"
    ],
    "bundles": [
     "Prime Pack"
@@ -5496,13 +5393,14 @@
    ],
    "options": [
     "Cable de carga CA para estación de carga pública/doméstica",
+    "Faros Pixel LED adaptativos",
     "Cristales tintados ventanillas traseras",
     "Compatible con la instalación de la bola de remolque"
    ],
-   "drivetrain": "Tracción a las cuatro ruedas",
-   "rangeKm": "583",
-   "power": "310 kW / 421 CV",
-   "acceleration": "4,5 segundos",
+   "drivetrain": "Tracción trasera",
+   "rangeKm": "643",
+   "power": "220 kW / 299 CV",
+   "acceleration": "6,2 segundos",
    "location": null,
    "locationCity": null,
    "partner": null,
@@ -5514,16 +5412,16 @@
    "rhd": false,
    "flags": {
     "coupe": false,
-    "single": false,
+    "single": true,
     "nonEu": false,
     "rhd": false,
     "campaign": true
    },
    "cycleState": "New",
    "versionTimestamp": null,
-   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/72300/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
+   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FE/70700/001170/RC8300/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
    "imagePhoto": null,
-   "pno34": "534FDPQ0E11972300RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
+   "pno34": "534FEPQ0L11970700RC8300      00000001170001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
    "structureWeek": "202617",
    "firstSeen": "2026-08-17T17:08:10.809Z",
    "relistedAt": null,
@@ -5626,6 +5524,108 @@
    "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/71700/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
    "imagePhoto": null,
    "pno34": "534FDPQ0E11971700RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
+   "structureWeek": "202617",
+   "firstSeen": "2026-08-17T17:08:10.809Z",
+   "relistedAt": null,
+   "daysListed": 2,
+   "priceHistory": [
+    {
+     "t": "2026-08-17T17:08:10.809Z",
+     "price": 55710,
+     "currency": "EUR"
+    }
+   ],
+   "priceChange": 0,
+   "priceChangeAt": null,
+   "priceChangeSinceFirst": 0,
+   "priceMax": 55710
+  },
+  {
+   "source": "stock",
+   "id": "stock:es:534FDPQ0E11972300RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD-2027-202617-es-ES",
+   "vin": null,
+   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FDPQ0E11972300RM8000%20%20%20%20%20%2000000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD/?year=2027&structureweek=202617",
+   "model": "Polestar 2",
+   "modelShort": "P2",
+   "modelCode": "534",
+   "displayName": "Polestar 2",
+   "modelYear": 2027,
+   "variant": "Dual Motor",
+   "motorCode": "FD",
+   "motorLabel": "Long range Dual motor",
+   "firstRegistration": null,
+   "delivery": "Finales de septiembre",
+   "deliveryDate": "2026-09-22T02:44:17.384Z",
+   "mileageKm": 0,
+   "mileageRaw": 0,
+   "mileageUnit": "km",
+   "price": 55710,
+   "listPrice": 60750,
+   "discount": 5040,
+   "discountPct": 8.3,
+   "currency": "EUR",
+   "priceEur": 55710,
+   "listPriceEur": 60750,
+   "vatDeductible": null,
+   "color": "Midnight",
+   "colorCode": "72300",
+   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
+   "wheels": "19\" Aero",
+   "packs": [
+    "Plus",
+    "Pilot",
+    "Climate"
+   ],
+   "bundles": [
+    "Prime Pack"
+   ],
+   "packDetails": [
+    {
+     "name": "Plus",
+     "code": "XPLUSS",
+     "label": "Plus"
+    },
+    {
+     "name": "Pilot",
+     "code": "XPILOT",
+     "label": "Pilot"
+    },
+    {
+     "name": "Climate",
+     "code": "XCLIMT",
+     "label": "Climate"
+    }
+   ],
+   "options": [
+    "Cable de carga CA para estación de carga pública/doméstica",
+    "Cristales tintados ventanillas traseras",
+    "Compatible con la instalación de la bola de remolque"
+   ],
+   "drivetrain": "Tracción a las cuatro ruedas",
+   "rangeKm": "583",
+   "power": "310 kW / 421 CV",
+   "acceleration": "4,5 segundos",
+   "location": null,
+   "locationCity": null,
+   "partner": null,
+   "country": "es",
+   "countryName": "España",
+   "countryFlag": "🇪🇸",
+   "marketSlug": "es",
+   "eu": true,
+   "rhd": false,
+   "flags": {
+    "coupe": false,
+    "single": false,
+    "nonEu": false,
+    "rhd": false,
+    "campaign": true
+   },
+   "cycleState": "New",
+   "versionTimestamp": null,
+   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/72300/_/RM8000/19/_/XPLUSS/_/_/1/000179/default/0.jpg",
+   "imagePhoto": null,
+   "pno34": "534FDPQ0E11972300RM8000      00000001248900240XCLIMTXPILOTXPLUSSXPRIMEXTINTD",
    "structureWeek": "202617",
    "firstSeen": "2026-08-17T17:08:10.809Z",
    "relistedAt": null,
@@ -7000,115 +7000,6 @@
   },
   {
    "source": "stock",
-   "id": "stock:es:534FDPQ0E11971700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD-2027-202617-es-ES",
-   "vin": null,
-   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FDPQ0E11971700RM8000%20%20%20%20%20%2000000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD/?year=2027&structureweek=202617",
-   "model": "Polestar 2",
-   "modelShort": "P2",
-   "modelCode": "534",
-   "displayName": "Polestar 2",
-   "modelYear": 2027,
-   "variant": "Dual Motor",
-   "motorCode": "FD",
-   "motorLabel": "Long range Dual motor",
-   "firstRegistration": null,
-   "delivery": "Finales de septiembre",
-   "deliveryDate": "2026-09-22T02:44:23.504Z",
-   "mileageKm": 0,
-   "mileageRaw": 0,
-   "mileageUnit": "km",
-   "price": 58010,
-   "listPrice": 63050,
-   "discount": 5040,
-   "discountPct": 8,
-   "currency": "EUR",
-   "priceEur": 58010,
-   "listPriceEur": 63050,
-   "vatDeductible": null,
-   "color": "Space",
-   "colorCode": "71700",
-   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
-   "wheels": "20\" Pro graphite",
-   "packs": [
-    "Plus",
-    "Pilot",
-    "Climate",
-    "Pro"
-   ],
-   "bundles": [
-    "Prime Pack"
-   ],
-   "packDetails": [
-    {
-     "name": "Plus",
-     "code": "XPLUSS",
-     "label": "Plus"
-    },
-    {
-     "name": "Pilot",
-     "code": "XPILOT",
-     "label": "Pilot"
-    },
-    {
-     "name": "Climate",
-     "code": "XCLIMT",
-     "label": "Climate"
-    },
-    {
-     "name": "Pro",
-     "code": "001336",
-     "label": "Pro"
-    }
-   ],
-   "options": [
-    "Cable de carga CA para estación de carga pública/doméstica",
-    "Faros Pixel LED adaptativos",
-    "Cristales tintados ventanillas traseras",
-    "Compatible con la instalación de la bola de remolque"
-   ],
-   "drivetrain": "Tracción a las cuatro ruedas",
-   "rangeKm": "571",
-   "power": "310 kW / 421 CV",
-   "acceleration": "4,5 segundos",
-   "location": null,
-   "locationCity": null,
-   "partner": null,
-   "country": "es",
-   "countryName": "España",
-   "countryFlag": "🇪🇸",
-   "marketSlug": "es",
-   "eu": true,
-   "rhd": false,
-   "flags": {
-    "coupe": false,
-    "single": false,
-    "nonEu": false,
-    "rhd": false,
-    "campaign": true
-   },
-   "cycleState": "New",
-   "versionTimestamp": null,
-   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/71700/001170/RM8000/19/001336/XPLUSS/XPRWHE/_/1/000179/default/0.jpg",
-   "imagePhoto": null,
-   "pno34": "534FDPQ0E11971700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD",
-   "structureWeek": "202617",
-   "firstSeen": "2026-08-17T17:08:10.809Z",
-   "relistedAt": null,
-   "daysListed": 2,
-   "priceHistory": [
-    {
-     "t": "2026-08-17T17:08:10.809Z",
-     "price": 58010,
-     "currency": "EUR"
-    }
-   ],
-   "priceChange": 0,
-   "priceChangeAt": null,
-   "priceChangeSinceFirst": 0,
-   "priceMax": 58010
-  },
-  {
-   "source": "stock",
    "id": "stock:es:534FDPQ0E11974700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD-2027-202617-es-ES",
    "vin": null,
    "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FDPQ0E11974700RM8000%20%20%20%20%20%2000000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD/?year=2027&structureweek=202617",
@@ -7200,6 +7091,115 @@
    "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/74700/001170/RM8000/19/001336/XPLUSS/XPRWHE/_/1/000179/default/0.jpg",
    "imagePhoto": null,
    "pno34": "534FDPQ0E11974700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD",
+   "structureWeek": "202617",
+   "firstSeen": "2026-08-17T17:08:10.809Z",
+   "relistedAt": null,
+   "daysListed": 2,
+   "priceHistory": [
+    {
+     "t": "2026-08-17T17:08:10.809Z",
+     "price": 58010,
+     "currency": "EUR"
+    }
+   ],
+   "priceChange": 0,
+   "priceChangeAt": null,
+   "priceChangeSinceFirst": 0,
+   "priceMax": 58010
+  },
+  {
+   "source": "stock",
+   "id": "stock:es:534FDPQ0E11971700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD-2027-202617-es-ES",
+   "vin": null,
+   "url": "https://www.polestar.com/es/stock-cars/polestar-2/534FDPQ0E11971700RM8000%20%20%20%20%20%2000000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD/?year=2027&structureweek=202617",
+   "model": "Polestar 2",
+   "modelShort": "P2",
+   "modelCode": "534",
+   "displayName": "Polestar 2",
+   "modelYear": 2027,
+   "variant": "Dual Motor",
+   "motorCode": "FD",
+   "motorLabel": "Long range Dual motor",
+   "firstRegistration": null,
+   "delivery": "Finales de septiembre",
+   "deliveryDate": "2026-09-22T02:44:23.504Z",
+   "mileageKm": 0,
+   "mileageRaw": 0,
+   "mileageUnit": "km",
+   "price": 58010,
+   "listPrice": 63050,
+   "discount": 5040,
+   "discountPct": 8,
+   "currency": "EUR",
+   "priceEur": 58010,
+   "listPriceEur": 63050,
+   "vatDeductible": null,
+   "color": "Space",
+   "colorCode": "71700",
+   "interior": "Bio-attributed MicroTech en Charcoal con inserciones en madera Black Ash",
+   "wheels": "20\" Pro graphite",
+   "packs": [
+    "Plus",
+    "Pilot",
+    "Climate",
+    "Pro"
+   ],
+   "bundles": [
+    "Prime Pack"
+   ],
+   "packDetails": [
+    {
+     "name": "Plus",
+     "code": "XPLUSS",
+     "label": "Plus"
+    },
+    {
+     "name": "Pilot",
+     "code": "XPILOT",
+     "label": "Pilot"
+    },
+    {
+     "name": "Climate",
+     "code": "XCLIMT",
+     "label": "Climate"
+    },
+    {
+     "name": "Pro",
+     "code": "001336",
+     "label": "Pro"
+    }
+   ],
+   "options": [
+    "Cable de carga CA para estación de carga pública/doméstica",
+    "Faros Pixel LED adaptativos",
+    "Cristales tintados ventanillas traseras",
+    "Compatible con la instalación de la bola de remolque"
+   ],
+   "drivetrain": "Tracción a las cuatro ruedas",
+   "rangeKm": "571",
+   "power": "310 kW / 421 CV",
+   "acceleration": "4,5 segundos",
+   "location": null,
+   "locationCity": null,
+   "partner": null,
+   "country": "es",
+   "countryName": "España",
+   "countryFlag": "🇪🇸",
+   "marketSlug": "es",
+   "eu": true,
+   "rhd": false,
+   "flags": {
+    "coupe": false,
+    "single": false,
+    "nonEu": false,
+    "rhd": false,
+    "campaign": true
+   },
+   "cycleState": "New",
+   "versionTimestamp": null,
+   "imageStudio": "https://car-images.polestar.com/534/2027/summary/FD/71700/001170/RM8000/19/001336/XPLUSS/XPRWHE/_/1/000179/default/0.jpg",
+   "imagePhoto": null,
+   "pno34": "534FDPQ0E11971700RM8000      00000001170001248001336900240XCLIMTXPILOTXPLUSSXPRIMEXPRWHEXTINTD",
    "structureWeek": "202617",
    "firstSeen": "2026-08-17T17:08:10.809Z",
    "relistedAt": null,
@@ -12333,7 +12333,7 @@
    "structureWeek": "202617",
    "firstSeen": "2026-08-18T05:47:07.107Z",
    "relistedAt": "2026-08-19T12:17:44.350Z",
-   "daysListed": 1,
+   "daysListed": 2,
    "priceHistory": [
     {
      "t": "2026-08-17T17:08:10.809Z",
