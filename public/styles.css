@@ -283,3 +283,5 @@ td.loc .ell { display: inline-block; max-width: 220px; overflow: hidden; text-ov
 #sales-chart rect.seg:hover { opacity: 0.8; }
 .chart-tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 9px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 5; white-space: nowrap; }
 @media (max-width: 720px) { .sales { margin-left: 12px; margin-right: 12px; } .kpi .kpi-value { font-size: 18px; } }
+
+.badge.relist { background: var(--import-bg); color: var(--import); }

@@ -122,7 +122,10 @@ function writeSales(tracking, nowIso) {
   const modelName = (short) => Object.values(MODELS).find((m) => m.short === short)?.name ?? short;
   const sales = [];
   for (const [id, t] of Object.entries(tracking.vehicles)) {
-    if (!t.removedAt || !configured.has(t.country)) continue;
+    if (!t.removedAt || t.supersededBy || !configured.has(t.country)) continue;
+    // Si el mismo VIN se retiró y ha vuelto con otro anuncio, el episodio antiguo ya está marcado como relistado.
+    const lastRem = t.removals?.[t.removals.length - 1];
+    if (lastRem?.relistedAt) continue;
     const bf = backfill.get(id) ?? {};
     const m = t.meta ?? (bf.id ? { variant: bf.variant, modelYear: bf.modelYear, mileageKm: bf.mileageKm, priceEur: bf.priceEur, price: bf.price, currency: bf.currency, packs: bf.packs ?? [], bundles: bf.bundles ?? [] } : {});
     const days = Math.max(0, Math.round((Date.parse(t.removedAt) - Date.parse(t.firstSeen)) / 86400000));
@@ -143,6 +146,10 @@ function writeSales(tracking, nowIso) {
     });
   }
   sales.sort((a, b) => (a.removedAt < b.removedAt ? 1 : -1));
+  // Seguridad extra: un VIN solo cuenta una vez (la retirada más reciente).
+  const seenVin = new Set();
+  const deduped = sales.filter((x) => { if (!x.vin) return true; if (seenVin.has(x.vin)) return false; seenVin.add(x.vin); return true; });
+  sales.length = 0; sales.push(...deduped);
   const out = { generatedAt: nowIso, trackingSince: tracking.trackingSince ?? null, count: sales.length, sales };
   const json = JSON.stringify(out);
   writeFileSync(join(PUBLIC_DATA_DIR, 'sales.json'), json, 'utf8');
@@ -275,15 +282,33 @@ async function main() {
   // ¿Se ha consultado (con éxito) en esta ejecución el inventario al que pertenece este vehículo/registro de tracking?
   // En --offline los datos crudos pueden ser antiguos: no se marca nada como retirado ni se altera el tracking de retiradas.
   const wasQueried = (source, country, modelShort) => !offline && queriedKeys.has(`${source}:${country}:${modelShort}`);
+  // Índice VIN → ids del tracking, para reconocer el MISMO coche aunque Polestar publique un anuncio nuevo (id distinto).
+  const byVin = new Map();
+  for (const [id, t] of Object.entries(tracking.vehicles)) if (t.vin) { if (!byVin.has(t.vin)) byVin.set(t.vin, []); byVin.get(t.vin).push(id); }
+  const activeIds = new Set(unique.map((v) => v.id));
   for (const v of unique) {
     if (v._carried) { delete v._carried; continue; } // no consultado en esta ejecución: se deja como estaba
-    const t = tracking.vehicles[v.id] ?? { firstSeen: nowIso, priceHistory: [] };
+    let t = tracking.vehicles[v.id];
+    if (!t) {
+      t = { firstSeen: nowIso, priceHistory: [] };
+      // ¿Es un coche que ya conocíamos por VIN y estaba retirado? → relistado con id nuevo: hereda historia y NO cuenta
+      // ni como nuevo ni como venta doble (el registro antiguo queda "sustituido").
+      const prevIds = (v.vin && byVin.get(v.vin) || []).filter((id) => id !== v.id && tracking.vehicles[id]?.removedAt && !tracking.vehicles[id]?.supersededBy && !activeIds.has(id));
+      if (prevIds.length) {
+        prevIds.sort((a, b) => (tracking.vehicles[a].removedAt < tracking.vehicles[b].removedAt ? 1 : -1));
+        const old = tracking.vehicles[prevIds[0]];
+        old.supersededBy = v.id;
+        old.removals = old.removals ?? []; const last = old.removals[old.removals.length - 1];
+        if (last && !last.relistedAt) last.relistedAt = nowIso;
+        t.firstSeen = old.firstSeen; t.priceHistory = [...(old.priceHistory ?? [])];
+        t.removals = [...(old.removals ?? [])]; t.relistedAt = nowIso; t.relistedFrom = prevIds[0];
+      }
+    }
     t.lastSeen = nowIso;
-    // Un vehículo que había desaparecido y vuelve a aparecer se trata como alta nueva (relistado):
-    // cuenta como "nuevo" y sus días en venta empiezan de cero (el histórico de precios se conserva).
+    // Mismo id que había desaparecido y vuelve a aparecer: relistado. Conserva la fecha de primera vista y el histórico
+    // (no cuenta como nuevo ni como venta doble); la retirada anterior queda marcada como relistada.
     if (t.removedAt) {
-      t.relistedAt = nowIso; t.firstSeen = nowIso;
-      // El histórico de retiradas conserva el episodio, marcado como relistado (deja de contar como venta).
+      t.relistedAt = nowIso;
       t.removals = t.removals ?? []; const last = t.removals[t.removals.length - 1];
       if (last && !last.relistedAt) last.relistedAt = nowIso;
       delete t.removedAt;
@@ -305,6 +330,7 @@ async function main() {
     }
     tracking.vehicles[v.id] = t;
     v.firstSeen = t.firstSeen;
+    v.relistedAt = t.relistedAt ?? null; // última vez que volvió a aparecer tras haber sido retirado
     v.daysListed = Math.max(0, Math.round((startedAt - new Date(t.firstSeen)) / 86400000));
     v.priceHistory = t.priceHistory;
     const prevEntry = t.priceHistory.length >= 2 ? t.priceHistory[t.priceHistory.length - 2] : null;
@@ -327,7 +353,8 @@ async function main() {
 
   // Diff frente al refresco anterior (informativo).
   const prevIds = new Set((previous?.vehicles ?? []).map((v) => v.id));
-  const added = unique.filter((v) => !prevIds.has(v.id));
+  const relisted = unique.filter((v) => v.relistedAt === nowIso);
+  const added = unique.filter((v) => !prevIds.has(v.id) && v.relistedAt !== nowIso);
   const removed = previous ? previous.vehicles.filter((v) => !seen.has(v.id) && wasQueried(v.source, v.country, v.modelShort)) : [];
   // "Bajadas" = precio menor que en el refresco anterior (el cambio se ha detectado en ESTE refresco).
   const priceDrops = unique.filter((v) => v.priceChange < 0 && v.priceChangeAt === nowIso);
@@ -365,7 +392,7 @@ async function main() {
       stock: unique.filter((v) => v.source === 'stock').length,
       added: offline && previous ? previous.totals?.added ?? 0 : added.length,
       removed: offline && previous ? previous.totals?.removed ?? 0 : removed.length,
-      priceDrops: priceDrops.length, priceRises: priceRises.length, campaigns: campaigns.length,
+      priceDrops: priceDrops.length, priceRises: priceRises.length, campaigns: campaigns.length, relisted: relisted.length,
     },
     refreshes,
     previousGeneratedAt: offline && previous ? previous.previousGeneratedAt ?? null : previous?.generatedAt ?? null,
@@ -399,7 +426,7 @@ async function main() {
 
   console.log('');
   console.log(`Total: ${unique.length} vehículos (${output.totals.preowned} pre-owned + ${output.totals.stock} stock) en ${output.durationSec}s (${output.requestCount} requests).`);
-  console.log(`  Nuevos: ${added.length} · Retirados: ${removed.length} · Bajadas de precio: ${priceDrops.length} · Subidas: ${priceRises.length} · Con oferta/descuento: ${campaigns.length}`);
+  console.log(`  Nuevos: ${added.length} · Relistados: ${relisted.length} · Retirados: ${removed.length} · Bajadas de precio: ${priceDrops.length} · Subidas: ${priceRises.length} · Con oferta/descuento: ${campaigns.length}`);
   // Para los workflows: ¿ha habido algún cambio real en el inventario? (permite saltarse commit/deploy si no).
   const changed = added.length + removed.length + priceDrops.length + priceRises.length > 0;
   writeFileSync(join(DATA_DIR, 'last-run.json'), JSON.stringify({ generatedAt: nowIso, scope: output.scope, changed, added: added.length, removed: removed.length, priceDrops: priceDrops.length, priceRises: priceRises.length }), 'utf8');

@@ -134,11 +134,12 @@
       // Últimas 24 h: nuevos (posteriores al primer refresco de la historia) o bajadas de precio en esa ventana.
       isNew24: !!v.firstSeen && DATA.trackingSince != null && v.firstSeen > DATA.trackingSince && (GEN_TS - Date.parse(v.firstSeen)) <= H24,
       isDrop24: v.priceChange < 0 && !!v.priceChangeAt && (GEN_TS - Date.parse(v.priceChangeAt)) <= H24,
+      isRelisted24: !!v.relistedAt && (GEN_TS - Date.parse(v.relistedAt)) <= H24,
       _search: [v.model, v.displayName, v.variant, v.motorLabel, v.color, v.interior, v.wheels, v.location, v.partner, v.countryName, v.country, v.vin, (v.packs || []).join(' '), (v.bundles || []).join(' '), (v.options || []).join(' '), v.modelYear, v.delivery].join(' ').toLowerCase(),
     };
-    rec.isRecent = rec.isNew24 || rec.isDrop24;
+    rec.isRecent = rec.isNew24 || rec.isDrop24 || rec.isRelisted24;
     // Para ordenar la pestaña "Últimas 24 h": momento del cambio más reciente.
-    rec.recentAt = rec.isDrop24 ? v.priceChangeAt : rec.isNew24 ? v.firstSeen : null;
+    rec.recentAt = [rec.isDrop24 ? v.priceChangeAt : null, rec.isNew24 ? v.firstSeen : null, rec.isRelisted24 ? v.relistedAt : null].filter(Boolean).sort().pop() || null;
     rec.recentTs = rec.recentAt ? Date.parse(rec.recentAt) : null;
     return rec;
   }
@@ -343,7 +344,7 @@
   };
   COLUMNS.recent = [
     { key: null, label: '', cls: 'thumb', render: thumb },
-    { key: 'recentTs', label: 'Cambio', render: (v) => (v.isDrop24 ? `<span class="badge kind-drop">▼ bajada</span>` : '') + (v.isNew24 ? `<span class="badge kind-new">nuevo</span>` : '') + `<span class="sub">${v.recentAt ? fmtDateTime(v.recentAt) : ''}</span>` },
+    { key: 'recentTs', label: 'Cambio', render: (v) => (v.isDrop24 ? `<span class="badge kind-drop">▼ bajada</span>` : '') + (v.isNew24 ? `<span class="badge kind-new">nuevo</span>` : '') + (v.isRelisted24 ? `<span class="badge relist">↩ relistado</span>` : '') + `<span class="sub">${v.recentAt ? fmtDateTime(v.recentAt) : ''}</span>` },
     { key: 'source', label: 'Tipo', render: (v) => `<span class="badge src">${v.source === 'stock' ? 'nuevo (stock)' : 'pre-owned'}</span>` },
     { key: 'model', label: 'Modelo', render: modelCell },
     { key: 'variant', label: 'Versión', render: variantCell },
@@ -385,6 +386,7 @@
     if (v.priceChange < 0) b += `<span class="badge drop" title="Bajó ${fmtMoney(-v.priceChange, v.currency)} el ${fmtDay(v.priceChangeAt)}${v.isDrop ? ' (último refresco)' : ''}">▼ ${fmtMoney(-v.priceChange, v.currency)}</span>`;
     else if (v.priceChange > 0) b += `<span class="badge rise" title="Subió ${fmtMoney(v.priceChange, v.currency)} el ${fmtDay(v.priceChangeAt)}">▲ ${fmtMoney(v.priceChange, v.currency)}</span>`;
     if (v.isNew) b += `<span class="badge new">nuevo</span>`;
+    if (v.relistedAt) b += `<span class="badge relist" title="Este coche ya estuvo a la venta (mismo VIN/anuncio), fue retirado y volvió el ${fmtDay(v.relistedAt)}. Conserva su historial: no cuenta como nuevo ni como venta doble.">↩ relistado</span>`;
     return b;
   }
 
@@ -443,7 +445,7 @@
     const f = F();
     const prev = DATA.previousGeneratedAt ? 'respecto al refresco anterior (' + fmtDateTime(DATA.previousGeneratedAt) + ')' : 'primer refresco: sin comparación';
     const stat = (key, label, n, on) => `<span class="stat ${on ? 'on' : ''} ${n ? '' : 'zero'}" data-stat="${key}" title="${esc(prev)}. Clic para ${on ? 'quitar el filtro' : 'ver cuáles son'}">${label} <b>${n}</b></span>`;
-    $('#totals').innerHTML = stat('new', 'nuevos', t.added ?? 0, f.onlyNew) + ' · ' + stat('removed', 'retirados', t.removed ?? 0, !$('#removed-panel').classList.contains('hidden')) + ' · ' + stat('drops', 'bajadas', t.priceDrops ?? 0, f.onlyDrops);
+    $('#totals').innerHTML = stat('new', 'nuevos', t.added ?? 0, f.onlyNew) + ' · ' + stat('removed', 'retirados', t.removed ?? 0, !$('#removed-panel').classList.contains('hidden')) + ' · ' + stat('drops', 'bajadas', t.priceDrops ?? 0, f.onlyDrops) + (t.relisted ? ` · <span class="stat zero" title="Coches que habían sido retirados y vuelven a estar a la venta (mismo VIN o anuncio); no cuentan como nuevos ni como venta doble">relistados <b>${t.relisted}</b></span>` : '');
   }
 
   function renderRemoved() {

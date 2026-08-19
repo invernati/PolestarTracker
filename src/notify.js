@@ -80,7 +80,7 @@ function matches(v, al) {
 }
 
 function line(v, kind) {
-  const what = v.source === 'stock' ? 'NUEVO en stock' : 'Pre-owned';
+  const what = (v.source === 'stock' ? 'NUEVO en stock' : 'Pre-owned') + (v.relistedAt && v.relistedAt !== v.firstSeen && kind === 'new' ? ' (↩ vuelve a estar a la venta)' : '');
   const spec = [v.model, v.variant, v.modelYear ? `MY${v.modelYear}` : '', v.color].filter(Boolean).join(' · ');
   const extra = v.source === 'stock' ? (v.delivery ? `entrega ${v.delivery}` : '') : [km(v.mileageKm), v.location].filter(Boolean).join(' · ');
   let price = money(v.price, v.currency);
@@ -92,7 +92,8 @@ function line(v, kind) {
 /** Secciones de una alerta (null si no hay nada que avisar). */
 function buildAlert(inv, al) {
   const g = inv.generatedAt;
-  const news = al.events.has('new') ? inv.vehicles.filter((v) => matches(v, al) && v.firstSeen === g && !!inv.previousGeneratedAt) : [];
+  // "Nuevos" incluye los relistados (vuelven a estar a la venta), marcados como tales.
+  const news = al.events.has('new') ? inv.vehicles.filter((v) => matches(v, al) && !!inv.previousGeneratedAt && (v.firstSeen === g || v.relistedAt === g)) : [];
   const drops = al.events.has('drop') ? inv.vehicles.filter((v) => matches(v, al) && v.priceChange < 0 && v.priceChangeAt === g) : [];
   const removed = al.events.has('removed') ? (inv.removed ?? []).filter((v) => matches({ ...v, modelShort: String(v.model ?? '').replace('Polestar ', 'P'), flags: {} }, al)) : [];
   const parts = [];
